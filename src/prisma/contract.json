@@ -184,6 +184,23 @@
                 "value": "FAILED"
               }
             ]
+          },
+          "Role": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "USER",
+                "value": "USER"
+              },
+              {
+                "name": "ADMIN",
+                "value": "ADMIN"
+              },
+              {
+                "name": "SUPERADMIN",
+                "value": "SUPERADMIN"
+              }
+            ]
           }
         },
         "models": {
@@ -1239,6 +1256,19 @@
                   "kind": "scalar"
                 }
               },
+              "role": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "Role",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -1380,6 +1410,9 @@
                 },
                 "phone": {
                   "column": "phone"
+                },
+                "role": {
+                  "column": "role"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -2430,6 +2463,11 @@
                   "expression": "\"kycStatus\" IN ('PENDING', 'APPROVED', 'REJECTED')",
                   "name": "user_kycStatus_check_039b5ced",
                   "prefix": "user_kycStatus_check"
+                },
+                {
+                  "expression": "\"role\" IN ('USER', 'ADMIN', 'SUPERADMIN')",
+                  "name": "user_role_check_84d7b8cb",
+                  "prefix": "user_role_check"
                 }
               ],
               "columns": {
@@ -2490,6 +2528,21 @@
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
+                },
+                "role": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "USER"
+                  },
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "Role",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-string@1",
@@ -2713,6 +2766,14 @@
                 "SUCCESS",
                 "FAILED"
               ]
+            },
+            "Role": {
+              "kind": "valueSet",
+              "values": [
+                "USER",
+                "ADMIN",
+                "SUPERADMIN"
+              ]
             }
           }
         },
@@ -2720,7 +2781,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "65c2109b14dd4ddf9c0189faf722a43660ba9729141e0df93ea40469b6c81189"
+    "storageHash": "6a786d2860afd7f8cdc0e226707a4649bd4594b9a08cdd0dfb2a4d26ee9a03ae"
   },
   "execution": {
     "executionHash": "0ab4463d62bc3beee42aacd970f7cc0726c7760771ebcca21f90e2b9a64a6408",

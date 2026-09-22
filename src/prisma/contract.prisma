@@ -1,4 +1,10 @@
 // use prisma-8
+enum Role {
+  USER
+  ADMIN
+  SUPERADMIN
+}
+
 enum PocketType {
   SAVINGS
   INVESTMENT
@@ -50,6 +56,7 @@ enum IdempotencyStatus {
 model User {
   id               String                     @id @default(uuid())
   email            String                     @unique
+  role             Role                       @default(USER)
   phone            String                     @unique
   passwordHash     String
   kycStatus        KycStatus                  @default(PENDING)
