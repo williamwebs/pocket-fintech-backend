@@ -1,0 +1,79 @@
+# Generated .gitignore file for: Node, JavaScript, TypeScript, Express, VSCode, Windows, npm, Webpack, Babel, PostgreSQL, MySQL, SQLite, Redis, JSON
+# Created with FOSSA's DevOps Tools
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+.env
+.DS_Store
+dist/
+.cache/
+coverage/
+
+# JavaScript
+# Add JavaScript-specific ignores here
+
+# TypeScript
+# Add TypeScript-specific ignores here
+
+# Express
+# Add Express-specific ignores here
+
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Windows
+# Add Windows-specific ignores here
+
+# npm
+# Add npm-specific ignores here
+
+# Webpack
+# Add Webpack-specific ignores here
+
+# Babel
+# Add Babel-specific ignores here
+
+# PostgreSQL
+# Add PostgreSQL-specific ignores here
+
+# MySQL
+# Add MySQL-specific ignores here
+
+# SQLite
+# Add SQLite-specific ignores here
+
+# Redis
+# Add Redis-specific ignores here
+
+# JSON
+# Add JSON-specific ignores here
+
+# Common
+.DS_Store
+Thumbs.db
+*.log
+*.bak
+*.tmp
+*.swp
+*~
+
+# IDE and editor generated files
+.idea/
+*.sublime-*
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.production.local
+
+# Prisma
+generated/prisma
+

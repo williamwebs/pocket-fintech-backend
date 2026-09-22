@@ -1,0 +1,46 @@
+{
+  "name": "pocket-fintech-backend",
+  "version": "0.0.0",
+  "private": true,
+  "main": "src/app.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/app.ts",
+    "start": "node dist/src/app.js",
+    "prisma:migrate": "prisma migration plan --name",
+    "prisma:studio": "prisma studio",
+    "postinstall": "prisma skills sync || exit 0",
+    "contract:emit": "prisma contract emit",
+    "db:migrate": "prisma db migrate --advance-ref"
+  },
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@prisma/adapter-neon": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "@prisma/orm-postgres": "^8.0.0-rc.11",
+    "cookie-parser": "~1.4.4",
+    "cors": "^2.8.6",
+    "debug": "~2.6.9",
+    "dotenv": "^17.4.2",
+    "express": "~4.16.1",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "~1.9.1",
+    "pino": "^10.3.1",
+    "pino-pretty": "^13.1.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@prisma/cli-engine": "^0.4.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^22.20.3",
+    "prisma": "^8.0.0-rc.15",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}

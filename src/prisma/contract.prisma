@@ -1,0 +1,198 @@
+// use prisma-8
+enum PocketType {
+  SAVINGS
+  INVESTMENT
+  EMERGENCY
+  SPENDING
+}
+
+enum PocketLockCategory {
+  SAFE_LOCK
+  TIGHT_LOCK
+}
+
+enum LedgerDirection {
+  CREDIT
+  DEBIT
+}
+
+enum LedgerEntryType {
+  DEPOSIT_SPLIT
+  PURCHASE
+  UNLOCK_TRANSFER
+  MANUAL_ADJUSTMENT
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BillType {
+  AIRTIME
+  DATA
+  ELECTRICITY
+  CABLE_TV
+}
+
+enum PurchaseStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum IdempotencyStatus {
+  PROCESSING
+  COMPLETED
+}
+
+model User {
+  id               String                     @id @default(uuid())
+  email            String                     @unique
+  phone            String                     @unique
+  passwordHash     String
+  kycStatus        KycStatus                  @default(PENDING)
+  kycTier          Int                        @default(0) // 0 = unverified, 1/2/3 per Anchor's tiers
+  anchorCustomerId String?                    @unique
+  createdAt        TimestamptzString          @default(now())
+  updatedAt        temporal.updatedAtString()
+
+  virtualAccount   VirtualAccount?
+  pockets          Pocket[]
+  sessions         Session[]
+  kycVerifications KycVerification[]
+  beneficiaries    Beneficiary[]
+  purchases        Purchase[]
+  idempotencyKeys  IdempotencyKey[]
+}
+
+model Session {
+  id                String            @id @default(uuid())
+  userId            String
+  user              User              @relation(fields:[userId], references:[id])
+  tokenHash         String            @unique // SHA-256 of the refresh token — never store it raw
+  isRevoked         Boolean           @default(false)
+  replacedByTokenId String?           @unique
+  replacedBy        Session?          @relation("TokenRotation", fields:[replacedByTokenId], references:[id])
+  replacedFrom      Session?          @relation("TokenRotation")
+  expiresAt         TimestamptzString
+  createdAt         TimestamptzString @default(now())
+
+  @@index([userId])
+}
+
+model KycVerification {
+  id              String             @id @default(uuid())
+  userId          String
+  user            User               @relation(fields:[userId], references:[id])
+  tier            Int // tier being attempted: 1, 2, or 3
+  status          KycStatus          @default(PENDING)
+  documentType    String? // e.g. NIN, BVN, international passport
+  documentUrl     String?
+  rejectionReason String?
+  reviewedAt      TimestamptzString?
+  createdAt       TimestamptzString  @default(now())
+}
+
+model VirtualAccount {
+  id              String            @id @default(uuid())
+  userId          String            @unique
+  user            User              @relation(fields:[userId], references:[id])
+  anchorAccountId String            @unique
+  accountNumber   String
+  bankName        String
+  createdAt       TimestamptzString @default(now())
+}
+
+model Pocket {
+  id              String                     @id @default(uuid())
+  userId          String
+  user            User                       @relation(fields:[userId], references:[id])
+  type            PocketType
+  lockCategory    PocketLockCategory? // null for SPENDING, which is never locked
+  balance         BigInt                     @default(0) // kobo — only change alongside a LedgerEntry
+  splitPercent    Int? // null for SPENDING (takes the remainder)
+  isLocked        Boolean                    @default(false)
+  lockedAt        TimestamptzString?
+  maturityDate    TimestamptzString?
+  qstashMessageId String? // set when a TIGHT_LOCK schedules its unlock job
+  createdAt       TimestamptzString          @default(now())
+  updatedAt       temporal.updatedAtString()
+
+  ledgerEntries   LedgerEntry[]
+  purchases       Purchase[]
+
+  @@unique([userId, type])
+}
+
+model LedgerEntry {
+  id             String            @id @default(uuid())
+  pocketId       String
+  pocket         Pocket            @relation(fields:[pocketId], references:[id])
+  direction      LedgerDirection
+  type           LedgerEntryType
+  amount         BigInt // always positive, kobo — direction says credit or debit
+  batchReference String // groups the entries from one split or one purchase
+  webhookEventId String?
+  webhookEvent   WebhookEvent?     @relation(fields:[webhookEventId], references:[id])
+  createdAt      TimestamptzString @default(now())
+
+  @@index([pocketId])
+  @@index([batchReference])
+}
+
+model WebhookEvent {
+  id            String             @id @default(uuid())
+  externalId    String             @unique // Anchor's event/transaction ID — your idempotency guard
+  eventType     String // e.g. "payment.settled", "accountNumber.created"
+  payload       Json
+  processedAt   TimestamptzString?
+  createdAt     TimestamptzString  @default(now())
+
+  ledgerEntries LedgerEntry[]
+}
+
+model Purchase {
+  id                String                     @id @default(uuid())
+  userId            String
+  user              User                       @relation(fields:[userId], references:[id])
+  pocketId          String // always the SPENDING pocket, enforced in app logic
+  pocket            Pocket                     @relation(fields:[pocketId], references:[id])
+  type              BillType
+  amount            BigInt // kobo
+  commissionEarned  BigInt? // Anchor pays 2% airtime/data, 1% electricity, up to 1.5% cable
+  recipientPhone    String?
+  meterNumber       String?
+  smartCardNumber   String? // cable TV
+  providerReference String                     @unique // Anchor's transaction reference — idempotency + reconciliation
+  status            PurchaseStatus             @default(PENDING)
+  createdAt         TimestamptzString          @default(now())
+  updatedAt         temporal.updatedAtString()
+}
+
+model Beneficiary {
+  id             String            @id @default(uuid())
+  userId         String
+  user           User              @relation(fields:[userId], references:[id])
+  internalUserId String? // set if the beneficiary is also a platform user — enables book transfer
+  accountNumber  String
+  bankCode       String
+  accountName    String
+  nickname       String?
+  createdAt      TimestamptzString @default(now())
+
+  @@unique([userId, accountNumber, bankCode])
+}
+
+model IdempotencyKey {
+  id           String            @id @default(uuid())
+  key          String            @unique // client-supplied header, e.g. a UUID per user action
+  userId       String
+  user         User              @relation(fields:[userId], references:[id])
+  endpoint     String // which action this key guards, e.g. "POST /pockets/lock"
+  status       IdempotencyStatus @default(PROCESSING)
+  responseBody Json? // cached response, replayed if the same key comes in again
+  createdAt    TimestamptzString @default(now())
+  expiresAt    TimestamptzString // TTL — clean these up periodically
+}

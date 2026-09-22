@@ -1,0 +1,1765 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.beneficiary",
+    "label": "Create table \"beneficiary\"",
+    "summary": "Creates table \"beneficiary\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "beneficiary"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"beneficiary\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"beneficiary\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"beneficiary\"",
+        "sql": "CREATE TABLE \"public\".\"beneficiary\" (\n  \"accountName\" text NOT NULL,\n  \"accountNumber\" text NOT NULL,\n  \"bankCode\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"internalUserId\" text,\n  \"nickname\" text,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"beneficiary\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"beneficiary\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.idempotencyKey",
+    "label": "Create table \"idempotencyKey\"",
+    "summary": "Creates table \"idempotencyKey\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "idempotencyKey"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"idempotencyKey\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"idempotencyKey\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"idempotencyKey\"",
+        "sql": "CREATE TABLE \"public\".\"idempotencyKey\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"endpoint\" text NOT NULL,\n  \"expiresAt\" timestamptz NOT NULL,\n  \"id\" text NOT NULL,\n  \"key\" text NOT NULL,\n  \"responseBody\" json,\n  \"status\" text DEFAULT 'PROCESSING' NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"idempotencyKey_status_check_04abb37d\" CHECK (\"status\" IN ('PROCESSING', 'COMPLETED'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"idempotencyKey\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"idempotencyKey\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.kycVerification",
+    "label": "Create table \"kycVerification\"",
+    "summary": "Creates table \"kycVerification\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "kycVerification"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"kycVerification\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"kycVerification\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"kycVerification\"",
+        "sql": "CREATE TABLE \"public\".\"kycVerification\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"documentType\" text,\n  \"documentUrl\" text,\n  \"id\" text NOT NULL,\n  \"rejectionReason\" text,\n  \"reviewedAt\" timestamptz,\n  \"status\" text DEFAULT 'PENDING' NOT NULL,\n  \"tier\" int4 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"kycVerification_status_check_56005a61\" CHECK (\"status\" IN ('PENDING', 'APPROVED', 'REJECTED'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"kycVerification\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"kycVerification\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.ledgerEntry",
+    "label": "Create table \"ledgerEntry\"",
+    "summary": "Creates table \"ledgerEntry\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "ledgerEntry"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"ledgerEntry\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ledgerEntry\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"ledgerEntry\"",
+        "sql": "CREATE TABLE \"public\".\"ledgerEntry\" (\n  \"amount\" int8 NOT NULL,\n  \"batchReference\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"direction\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"pocketId\" text NOT NULL,\n  \"type\" text NOT NULL,\n  \"webhookEventId\" text,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"ledgerEntry_direction_check_e45d5490\" CHECK (\"direction\" IN ('CREDIT', 'DEBIT')),\n  CONSTRAINT \"ledgerEntry_type_check_166e7665\" CHECK (\"type\" IN ('DEPOSIT_SPLIT', 'PURCHASE', 'UNLOCK_TRANSFER', 'MANUAL_ADJUSTMENT'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"ledgerEntry\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ledgerEntry\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.pocket",
+    "label": "Create table \"pocket\"",
+    "summary": "Creates table \"pocket\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "pocket"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"pocket\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"pocket\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"pocket\"",
+        "sql": "CREATE TABLE \"public\".\"pocket\" (\n  \"balance\" int8 DEFAULT '0'::int8 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"isLocked\" bool DEFAULT false NOT NULL,\n  \"lockCategory\" text,\n  \"lockedAt\" timestamptz,\n  \"maturityDate\" timestamptz,\n  \"qstashMessageId\" text,\n  \"splitPercent\" int4,\n  \"type\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"pocket_lockCategory_check_5fa0740c\" CHECK (\"lockCategory\" IN ('SAFE_LOCK', 'TIGHT_LOCK')),\n  CONSTRAINT \"pocket_type_check_0c7b9c2b\" CHECK (\"type\" IN ('SAVINGS', 'INVESTMENT', 'EMERGENCY', 'SPENDING'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"pocket\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"pocket\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.purchase",
+    "label": "Create table \"purchase\"",
+    "summary": "Creates table \"purchase\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "purchase"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"purchase\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"purchase\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"purchase\"",
+        "sql": "CREATE TABLE \"public\".\"purchase\" (\n  \"amount\" int8 NOT NULL,\n  \"commissionEarned\" int8,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"meterNumber\" text,\n  \"pocketId\" text NOT NULL,\n  \"providerReference\" text NOT NULL,\n  \"recipientPhone\" text,\n  \"smartCardNumber\" text,\n  \"status\" text DEFAULT 'PENDING' NOT NULL,\n  \"type\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"purchase_status_check_f32a67f1\" CHECK (\"status\" IN ('PENDING', 'SUCCESS', 'FAILED')),\n  CONSTRAINT \"purchase_type_check_075e7414\" CHECK (\"type\" IN ('AIRTIME', 'DATA', 'ELECTRICITY', 'CABLE_TV'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"purchase\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"purchase\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.session",
+    "label": "Create table \"session\"",
+    "summary": "Creates table \"session\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "session"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"session\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"session\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"session\"",
+        "sql": "CREATE TABLE \"public\".\"session\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"expiresAt\" timestamptz NOT NULL,\n  \"id\" text NOT NULL,\n  \"isRevoked\" bool DEFAULT false NOT NULL,\n  \"replacedByTokenId\" text,\n  \"tokenHash\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"session\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"session\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.user",
+    "label": "Create table \"user\"",
+    "summary": "Creates table \"user\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"user\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"user\"",
+        "sql": "CREATE TABLE \"public\".\"user\" (\n  \"anchorCustomerId\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"email\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"kycStatus\" text DEFAULT 'PENDING' NOT NULL,\n  \"kycTier\" int4 DEFAULT 0 NOT NULL,\n  \"passwordHash\" text NOT NULL,\n  \"phone\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"user_kycStatus_check_039b5ced\" CHECK (\"kycStatus\" IN ('PENDING', 'APPROVED', 'REJECTED'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"user\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.virtualAccount",
+    "label": "Create table \"virtualAccount\"",
+    "summary": "Creates table \"virtualAccount\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "virtualAccount"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"virtualAccount\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"virtualAccount\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"virtualAccount\"",
+        "sql": "CREATE TABLE \"public\".\"virtualAccount\" (\n  \"accountNumber\" text NOT NULL,\n  \"anchorAccountId\" text NOT NULL,\n  \"bankName\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"virtualAccount\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"virtualAccount\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.webhookEvent",
+    "label": "Create table \"webhookEvent\"",
+    "summary": "Creates table \"webhookEvent\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "webhookEvent"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"webhookEvent\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"webhookEvent\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"webhookEvent\"",
+        "sql": "CREATE TABLE \"public\".\"webhookEvent\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"eventType\" text NOT NULL,\n  \"externalId\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"payload\" json NOT NULL,\n  \"processedAt\" timestamptz,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"webhookEvent\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"webhookEvent\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.beneficiary.beneficiary_userId_accountNumber_bankCode_key",
+    "label": "Add unique constraint on \"beneficiary\" (userId, accountNumber, bankCode)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "beneficiary_userId_accountNumber_bankCode_key",
+        "table": "beneficiary"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"beneficiary_userId_accountNumber_bankCode_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "beneficiary_userId_accountNumber_bankCode_key",
+          "public",
+          "\"public\".\"beneficiary\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"beneficiary_userId_accountNumber_bankCode_key\"",
+        "sql": "ALTER TABLE \"public\".\"beneficiary\" ADD CONSTRAINT \"beneficiary_userId_accountNumber_bankCode_key\" UNIQUE (\"userId\", \"accountNumber\", \"bankCode\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"beneficiary_userId_accountNumber_bankCode_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "beneficiary_userId_accountNumber_bankCode_key",
+          "public",
+          "\"public\".\"beneficiary\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.idempotencyKey.idempotencyKey_key_key",
+    "label": "Add unique constraint on \"idempotencyKey\" (key)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "idempotencyKey_key_key",
+        "table": "idempotencyKey"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"idempotencyKey_key_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "idempotencyKey_key_key",
+          "public",
+          "\"public\".\"idempotencyKey\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"idempotencyKey_key_key\"",
+        "sql": "ALTER TABLE \"public\".\"idempotencyKey\" ADD CONSTRAINT \"idempotencyKey_key_key\" UNIQUE (\"key\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"idempotencyKey_key_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "idempotencyKey_key_key",
+          "public",
+          "\"public\".\"idempotencyKey\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.pocket.pocket_userId_type_key",
+    "label": "Add unique constraint on \"pocket\" (userId, type)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "pocket_userId_type_key",
+        "table": "pocket"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"pocket_userId_type_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "pocket_userId_type_key",
+          "public",
+          "\"public\".\"pocket\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"pocket_userId_type_key\"",
+        "sql": "ALTER TABLE \"public\".\"pocket\" ADD CONSTRAINT \"pocket_userId_type_key\" UNIQUE (\"userId\", \"type\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"pocket_userId_type_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "pocket_userId_type_key",
+          "public",
+          "\"public\".\"pocket\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.purchase.purchase_providerReference_key",
+    "label": "Add unique constraint on \"purchase\" (providerReference)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "purchase_providerReference_key",
+        "table": "purchase"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"purchase_providerReference_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "purchase_providerReference_key",
+          "public",
+          "\"public\".\"purchase\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"purchase_providerReference_key\"",
+        "sql": "ALTER TABLE \"public\".\"purchase\" ADD CONSTRAINT \"purchase_providerReference_key\" UNIQUE (\"providerReference\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"purchase_providerReference_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "purchase_providerReference_key",
+          "public",
+          "\"public\".\"purchase\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.session.session_tokenHash_key",
+    "label": "Add unique constraint on \"session\" (tokenHash)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "session_tokenHash_key",
+        "table": "session"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"session_tokenHash_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "session_tokenHash_key",
+          "public",
+          "\"public\".\"session\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"session_tokenHash_key\"",
+        "sql": "ALTER TABLE \"public\".\"session\" ADD CONSTRAINT \"session_tokenHash_key\" UNIQUE (\"tokenHash\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"session_tokenHash_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "session_tokenHash_key",
+          "public",
+          "\"public\".\"session\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.session.session_replacedByTokenId_key",
+    "label": "Add unique constraint on \"session\" (replacedByTokenId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "session_replacedByTokenId_key",
+        "table": "session"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"session_replacedByTokenId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "session_replacedByTokenId_key",
+          "public",
+          "\"public\".\"session\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"session_replacedByTokenId_key\"",
+        "sql": "ALTER TABLE \"public\".\"session\" ADD CONSTRAINT \"session_replacedByTokenId_key\" UNIQUE (\"replacedByTokenId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"session_replacedByTokenId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "session_replacedByTokenId_key",
+          "public",
+          "\"public\".\"session\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.user.user_email_key",
+    "label": "Add unique constraint on \"user\" (email)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "user_email_key",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"user_email_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_email_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"user_email_key\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD CONSTRAINT \"user_email_key\" UNIQUE (\"email\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"user_email_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_email_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.user.user_phone_key",
+    "label": "Add unique constraint on \"user\" (phone)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "user_phone_key",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"user_phone_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_phone_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"user_phone_key\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD CONSTRAINT \"user_phone_key\" UNIQUE (\"phone\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"user_phone_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_phone_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.user.user_anchorCustomerId_key",
+    "label": "Add unique constraint on \"user\" (anchorCustomerId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "user_anchorCustomerId_key",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"user_anchorCustomerId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_anchorCustomerId_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"user_anchorCustomerId_key\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD CONSTRAINT \"user_anchorCustomerId_key\" UNIQUE (\"anchorCustomerId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"user_anchorCustomerId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_anchorCustomerId_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.virtualAccount.virtualAccount_userId_key",
+    "label": "Add unique constraint on \"virtualAccount\" (userId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "virtualAccount_userId_key",
+        "table": "virtualAccount"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"virtualAccount_userId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "virtualAccount_userId_key",
+          "public",
+          "\"public\".\"virtualAccount\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"virtualAccount_userId_key\"",
+        "sql": "ALTER TABLE \"public\".\"virtualAccount\" ADD CONSTRAINT \"virtualAccount_userId_key\" UNIQUE (\"userId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"virtualAccount_userId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "virtualAccount_userId_key",
+          "public",
+          "\"public\".\"virtualAccount\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.virtualAccount.virtualAccount_anchorAccountId_key",
+    "label": "Add unique constraint on \"virtualAccount\" (anchorAccountId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "virtualAccount_anchorAccountId_key",
+        "table": "virtualAccount"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"virtualAccount_anchorAccountId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "virtualAccount_anchorAccountId_key",
+          "public",
+          "\"public\".\"virtualAccount\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"virtualAccount_anchorAccountId_key\"",
+        "sql": "ALTER TABLE \"public\".\"virtualAccount\" ADD CONSTRAINT \"virtualAccount_anchorAccountId_key\" UNIQUE (\"anchorAccountId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"virtualAccount_anchorAccountId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "virtualAccount_anchorAccountId_key",
+          "public",
+          "\"public\".\"virtualAccount\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.webhookEvent.webhookEvent_externalId_key",
+    "label": "Add unique constraint on \"webhookEvent\" (externalId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "webhookEvent_externalId_key",
+        "table": "webhookEvent"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"webhookEvent_externalId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "webhookEvent_externalId_key",
+          "public",
+          "\"public\".\"webhookEvent\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"webhookEvent_externalId_key\"",
+        "sql": "ALTER TABLE \"public\".\"webhookEvent\" ADD CONSTRAINT \"webhookEvent_externalId_key\" UNIQUE (\"externalId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"webhookEvent_externalId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "webhookEvent_externalId_key",
+          "public",
+          "\"public\".\"webhookEvent\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.beneficiary.beneficiary_userId_idx_a489d58a",
+    "label": "Create index \"beneficiary_userId_idx_a489d58a\" on \"beneficiary\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "beneficiary_userId_idx_a489d58a",
+        "table": "beneficiary"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"beneficiary_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"beneficiary_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"beneficiary_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"beneficiary_userId_idx_a489d58a\" ON \"public\".\"beneficiary\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"beneficiary_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"beneficiary_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.idempotencyKey.idempotencyKey_userId_idx_a489d58a",
+    "label": "Create index \"idempotencyKey_userId_idx_a489d58a\" on \"idempotencyKey\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "idempotencyKey_userId_idx_a489d58a",
+        "table": "idempotencyKey"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"idempotencyKey_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"idempotencyKey_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"idempotencyKey_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"idempotencyKey_userId_idx_a489d58a\" ON \"public\".\"idempotencyKey\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"idempotencyKey_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"idempotencyKey_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.kycVerification.kycVerification_userId_idx_a489d58a",
+    "label": "Create index \"kycVerification_userId_idx_a489d58a\" on \"kycVerification\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "kycVerification_userId_idx_a489d58a",
+        "table": "kycVerification"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"kycVerification_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"kycVerification_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"kycVerification_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"kycVerification_userId_idx_a489d58a\" ON \"public\".\"kycVerification\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"kycVerification_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"kycVerification_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ledgerEntry.ledgerEntry_batchReference_idx_67f1944c",
+    "label": "Create index \"ledgerEntry_batchReference_idx_67f1944c\" on \"ledgerEntry\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ledgerEntry_batchReference_idx_67f1944c",
+        "table": "ledgerEntry"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ledgerEntry_batchReference_idx_67f1944c\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ledgerEntry_batchReference_idx_67f1944c\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ledgerEntry_batchReference_idx_67f1944c\"",
+        "sql": "CREATE INDEX \"ledgerEntry_batchReference_idx_67f1944c\" ON \"public\".\"ledgerEntry\" (\"batchReference\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ledgerEntry_batchReference_idx_67f1944c\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ledgerEntry_batchReference_idx_67f1944c\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ledgerEntry.ledgerEntry_pocketId_idx_690c3b5b",
+    "label": "Create index \"ledgerEntry_pocketId_idx_690c3b5b\" on \"ledgerEntry\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ledgerEntry_pocketId_idx_690c3b5b",
+        "table": "ledgerEntry"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ledgerEntry_pocketId_idx_690c3b5b\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ledgerEntry_pocketId_idx_690c3b5b\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ledgerEntry_pocketId_idx_690c3b5b\"",
+        "sql": "CREATE INDEX \"ledgerEntry_pocketId_idx_690c3b5b\" ON \"public\".\"ledgerEntry\" (\"pocketId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ledgerEntry_pocketId_idx_690c3b5b\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ledgerEntry_pocketId_idx_690c3b5b\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ledgerEntry.ledgerEntry_webhookEventId_idx_8852da26",
+    "label": "Create index \"ledgerEntry_webhookEventId_idx_8852da26\" on \"ledgerEntry\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ledgerEntry_webhookEventId_idx_8852da26",
+        "table": "ledgerEntry"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ledgerEntry_webhookEventId_idx_8852da26\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ledgerEntry_webhookEventId_idx_8852da26\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ledgerEntry_webhookEventId_idx_8852da26\"",
+        "sql": "CREATE INDEX \"ledgerEntry_webhookEventId_idx_8852da26\" ON \"public\".\"ledgerEntry\" (\"webhookEventId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ledgerEntry_webhookEventId_idx_8852da26\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ledgerEntry_webhookEventId_idx_8852da26\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.pocket.pocket_userId_idx_a489d58a",
+    "label": "Create index \"pocket_userId_idx_a489d58a\" on \"pocket\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "pocket_userId_idx_a489d58a",
+        "table": "pocket"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"pocket_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"pocket_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"pocket_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"pocket_userId_idx_a489d58a\" ON \"public\".\"pocket\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"pocket_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"pocket_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.purchase.purchase_pocketId_idx_690c3b5b",
+    "label": "Create index \"purchase_pocketId_idx_690c3b5b\" on \"purchase\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "purchase_pocketId_idx_690c3b5b",
+        "table": "purchase"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"purchase_pocketId_idx_690c3b5b\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"purchase_pocketId_idx_690c3b5b\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"purchase_pocketId_idx_690c3b5b\"",
+        "sql": "CREATE INDEX \"purchase_pocketId_idx_690c3b5b\" ON \"public\".\"purchase\" (\"pocketId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"purchase_pocketId_idx_690c3b5b\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"purchase_pocketId_idx_690c3b5b\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.purchase.purchase_userId_idx_a489d58a",
+    "label": "Create index \"purchase_userId_idx_a489d58a\" on \"purchase\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "purchase_userId_idx_a489d58a",
+        "table": "purchase"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"purchase_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"purchase_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"purchase_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"purchase_userId_idx_a489d58a\" ON \"public\".\"purchase\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"purchase_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"purchase_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.session.session_userId_idx_a489d58a",
+    "label": "Create index \"session_userId_idx_a489d58a\" on \"session\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "session_userId_idx_a489d58a",
+        "table": "session"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"session_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"session_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"session_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"session_userId_idx_a489d58a\" ON \"public\".\"session\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"session_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"session_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.beneficiary.beneficiary_userId_fkey",
+    "label": "Add foreign key \"beneficiary_userId_fkey\" on \"beneficiary\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "beneficiary_userId_fkey",
+        "table": "beneficiary"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"beneficiary_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "beneficiary_userId_fkey",
+          "public",
+          "\"public\".\"beneficiary\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"beneficiary_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"beneficiary\"\nADD CONSTRAINT \"beneficiary_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"beneficiary_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "beneficiary_userId_fkey",
+          "public",
+          "\"public\".\"beneficiary\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.idempotencyKey.idempotencyKey_userId_fkey",
+    "label": "Add foreign key \"idempotencyKey_userId_fkey\" on \"idempotencyKey\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "idempotencyKey_userId_fkey",
+        "table": "idempotencyKey"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"idempotencyKey_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "idempotencyKey_userId_fkey",
+          "public",
+          "\"public\".\"idempotencyKey\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"idempotencyKey_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"idempotencyKey\"\nADD CONSTRAINT \"idempotencyKey_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"idempotencyKey_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "idempotencyKey_userId_fkey",
+          "public",
+          "\"public\".\"idempotencyKey\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.kycVerification.kycVerification_userId_fkey",
+    "label": "Add foreign key \"kycVerification_userId_fkey\" on \"kycVerification\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "kycVerification_userId_fkey",
+        "table": "kycVerification"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"kycVerification_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "kycVerification_userId_fkey",
+          "public",
+          "\"public\".\"kycVerification\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"kycVerification_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"kycVerification\"\nADD CONSTRAINT \"kycVerification_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"kycVerification_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "kycVerification_userId_fkey",
+          "public",
+          "\"public\".\"kycVerification\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.ledgerEntry.ledgerEntry_pocketId_fkey",
+    "label": "Add foreign key \"ledgerEntry_pocketId_fkey\" on \"ledgerEntry\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "ledgerEntry_pocketId_fkey",
+        "table": "ledgerEntry"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"ledgerEntry_pocketId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ledgerEntry_pocketId_fkey",
+          "public",
+          "\"public\".\"ledgerEntry\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"ledgerEntry_pocketId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"ledgerEntry\"\nADD CONSTRAINT \"ledgerEntry_pocketId_fkey\"\nFOREIGN KEY (\"pocketId\")\nREFERENCES \"public\".\"pocket\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"ledgerEntry_pocketId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ledgerEntry_pocketId_fkey",
+          "public",
+          "\"public\".\"ledgerEntry\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.ledgerEntry.ledgerEntry_webhookEventId_fkey",
+    "label": "Add foreign key \"ledgerEntry_webhookEventId_fkey\" on \"ledgerEntry\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "ledgerEntry_webhookEventId_fkey",
+        "table": "ledgerEntry"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"ledgerEntry_webhookEventId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ledgerEntry_webhookEventId_fkey",
+          "public",
+          "\"public\".\"ledgerEntry\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"ledgerEntry_webhookEventId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"ledgerEntry\"\nADD CONSTRAINT \"ledgerEntry_webhookEventId_fkey\"\nFOREIGN KEY (\"webhookEventId\")\nREFERENCES \"public\".\"webhookEvent\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"ledgerEntry_webhookEventId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ledgerEntry_webhookEventId_fkey",
+          "public",
+          "\"public\".\"ledgerEntry\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.pocket.pocket_userId_fkey",
+    "label": "Add foreign key \"pocket_userId_fkey\" on \"pocket\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "pocket_userId_fkey",
+        "table": "pocket"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"pocket_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "pocket_userId_fkey",
+          "public",
+          "\"public\".\"pocket\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"pocket_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"pocket\"\nADD CONSTRAINT \"pocket_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"pocket_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "pocket_userId_fkey",
+          "public",
+          "\"public\".\"pocket\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.purchase.purchase_userId_fkey",
+    "label": "Add foreign key \"purchase_userId_fkey\" on \"purchase\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "purchase_userId_fkey",
+        "table": "purchase"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"purchase_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "purchase_userId_fkey",
+          "public",
+          "\"public\".\"purchase\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"purchase_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"purchase\"\nADD CONSTRAINT \"purchase_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"purchase_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "purchase_userId_fkey",
+          "public",
+          "\"public\".\"purchase\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.purchase.purchase_pocketId_fkey",
+    "label": "Add foreign key \"purchase_pocketId_fkey\" on \"purchase\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "purchase_pocketId_fkey",
+        "table": "purchase"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"purchase_pocketId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "purchase_pocketId_fkey",
+          "public",
+          "\"public\".\"purchase\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"purchase_pocketId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"purchase\"\nADD CONSTRAINT \"purchase_pocketId_fkey\"\nFOREIGN KEY (\"pocketId\")\nREFERENCES \"public\".\"pocket\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"purchase_pocketId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "purchase_pocketId_fkey",
+          "public",
+          "\"public\".\"purchase\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.session.session_userId_fkey",
+    "label": "Add foreign key \"session_userId_fkey\" on \"session\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "session_userId_fkey",
+        "table": "session"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"session_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "session_userId_fkey",
+          "public",
+          "\"public\".\"session\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"session_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"session\"\nADD CONSTRAINT \"session_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"session_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "session_userId_fkey",
+          "public",
+          "\"public\".\"session\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.session.session_replacedByTokenId_fkey",
+    "label": "Add foreign key \"session_replacedByTokenId_fkey\" on \"session\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "session_replacedByTokenId_fkey",
+        "table": "session"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"session_replacedByTokenId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "session_replacedByTokenId_fkey",
+          "public",
+          "\"public\".\"session\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"session_replacedByTokenId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"session\"\nADD CONSTRAINT \"session_replacedByTokenId_fkey\"\nFOREIGN KEY (\"replacedByTokenId\")\nREFERENCES \"public\".\"session\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"session_replacedByTokenId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "session_replacedByTokenId_fkey",
+          "public",
+          "\"public\".\"session\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.virtualAccount.virtualAccount_userId_fkey",
+    "label": "Add foreign key \"virtualAccount_userId_fkey\" on \"virtualAccount\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "virtualAccount_userId_fkey",
+        "table": "virtualAccount"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"virtualAccount_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "virtualAccount_userId_fkey",
+          "public",
+          "\"public\".\"virtualAccount\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"virtualAccount_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"virtualAccount\"\nADD CONSTRAINT \"virtualAccount_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"virtualAccount_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "virtualAccount_userId_fkey",
+          "public",
+          "\"public\".\"virtualAccount\""
+        ]
+      }
+    ]
+  }
+]
