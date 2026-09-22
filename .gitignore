@@ -76,4 +76,5 @@ Thumbs.db
 
 # Prisma
 generated/prisma
+prisma.txt
 

@@ -1242,6 +1242,13 @@
                   "kind": "scalar"
                 }
               },
+              "name": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "passwordHash": {
                 "nullable": false,
                 "type": {
@@ -1404,6 +1411,9 @@
                 },
                 "kycTier": {
                   "column": "kycTier"
+                },
+                "name": {
+                  "column": "name"
                 },
                 "passwordHash": {
                   "column": "passwordHash"
@@ -2519,6 +2529,11 @@
                   "nativeType": "int4",
                   "nullable": false
                 },
+                "name": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "passwordHash": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -2781,7 +2796,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "6a786d2860afd7f8cdc0e226707a4649bd4594b9a08cdd0dfb2a4d26ee9a03ae"
+    "storageHash": "e385c06152970f22adcc6a5da4c1a3ee3c047bd00b10e3c5c850a2815446f3be"
   },
   "execution": {
     "executionHash": "0ab4463d62bc3beee42aacd970f7cc0726c7760771ebcca21f90e2b9a64a6408",

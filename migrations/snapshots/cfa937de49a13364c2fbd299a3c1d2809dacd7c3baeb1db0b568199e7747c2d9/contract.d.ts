@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'e385c06152970f22adcc6a5da4c1a3ee3c047bd00b10e3c5c850a2815446f3be'>;
+  StorageHashBase<'cfa937de49a13364c2fbd299a3c1d2809dacd7c3baeb1db0b568199e7747c2d9'>;
 export type ExecutionHash =
   ExecutionHashBase<'0ab4463d62bc3beee42aacd970f7cc0726c7760771ebcca21f90e2b9a64a6408'>;
 export type ProfileHash =
@@ -323,7 +323,7 @@ export type FieldOutputTypes = {
     };
     readonly User: {
       readonly id: CodecTypes['pg/text@1']['output'];
-      readonly name: CodecTypes['pg/text@1']['output'] | null;
+      readonly name: CodecTypes['pg/text@1']['output'];
       readonly email: CodecTypes['pg/text@1']['output'];
       readonly role: 'USER' | 'ADMIN' | 'SUPERADMIN';
       readonly phone: CodecTypes['pg/text@1']['output'];
@@ -435,7 +435,7 @@ export type FieldInputTypes = {
     };
     readonly User: {
       readonly id: CodecTypes['pg/text@1']['input'];
-      readonly name: CodecTypes['pg/text@1']['input'] | null;
+      readonly name: CodecTypes['pg/text@1']['input'];
       readonly email: CodecTypes['pg/text@1']['input'];
       readonly role: 'USER' | 'ADMIN' | 'SUPERADMIN';
       readonly phone: CodecTypes['pg/text@1']['input'];
@@ -552,7 +552,7 @@ export type StorageColumnTypes = {
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly kycStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
       readonly kycTier: CodecTypes['pg/int4@1']['output'];
-      readonly name: CodecTypes['pg/text@1']['output'] | null;
+      readonly name: CodecTypes['pg/text@1']['output'];
       readonly passwordHash: CodecTypes['pg/text@1']['output'];
       readonly phone: CodecTypes['pg/text@1']['output'];
       readonly role: 'USER' | 'ADMIN' | 'SUPERADMIN';
@@ -664,7 +664,7 @@ export type StorageColumnInputTypes = {
       readonly id: CodecTypes['pg/text@1']['input'];
       readonly kycStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
       readonly kycTier: CodecTypes['pg/int4@1']['input'];
-      readonly name: CodecTypes['pg/text@1']['input'] | null;
+      readonly name: CodecTypes['pg/text@1']['input'];
       readonly passwordHash: CodecTypes['pg/text@1']['input'];
       readonly phone: CodecTypes['pg/text@1']['input'];
       readonly role: 'USER' | 'ADMIN' | 'SUPERADMIN';
@@ -692,7 +692,7 @@ export type StorageColumnInputTypes = {
 export namespace Models {
   export type public_User = {
     id: CodecTypes['pg/text@1']['output'];
-    name: CodecTypes['pg/text@1']['output'] | null;
+    name: CodecTypes['pg/text@1']['output'];
     email: CodecTypes['pg/text@1']['output'];
     role: 'USER' | 'ADMIN' | 'SUPERADMIN';
     phone: CodecTypes['pg/text@1']['output'];
@@ -1493,7 +1493,7 @@ type ContractBase = Omit<
                 readonly name: {
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
-                  readonly nullable: true;
+                  readonly nullable: false;
                 };
                 readonly email: {
                   readonly nativeType: 'text';
@@ -2338,7 +2338,7 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly name: {
-                readonly nullable: true;
+                readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly email: {
