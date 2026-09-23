@@ -23,9 +23,9 @@ export const signup = async (
       role,
       phone,
     });
+    // create session using user.id and metadata
+    // generate access token using user.id, role & email
   } catch (error) {
     console.error(error);
   }
-  // create session using user.id and metadata
-  // generate access token using user.id, role & email
 };
