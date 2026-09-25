@@ -1,0 +1,86 @@
+[
+  {
+    "id": "column.public.session.ipAddress",
+    "label": "Add column \"ipAddress\" to \"session\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "ipAddress",
+        "table": "session"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"ipAddress\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "session",
+          "ipAddress"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"ipAddress\"",
+        "sql": "ALTER TABLE \"public\".\"session\" ADD COLUMN \"ipAddress\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"ipAddress\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "session",
+          "ipAddress"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.session.userAgent",
+    "label": "Add column \"userAgent\" to \"session\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "userAgent",
+        "table": "session"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"userAgent\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "session",
+          "userAgent"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"userAgent\"",
+        "sql": "ALTER TABLE \"public\".\"session\" ADD COLUMN \"userAgent\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"userAgent\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "session",
+          "userAgent"
+        ]
+      }
+    ]
+  }
+]

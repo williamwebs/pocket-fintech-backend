@@ -8,9 +8,19 @@ const PASSWORD_HASH_OPTIONS = {
   parallelism: 1,
 } as const;
 
+export const DUMMY_PASSWORD = await argon2.hash("this-is-a-dummy-password", PASSWORD_HASH_OPTIONS)
+
 export const hashPassword = async (plainText: string): Promise<string> => {
   return await argon2.hash(plainText, PASSWORD_HASH_OPTIONS);
 };
+
+export const verifyPassword = async (hash: string, plain: string): Promise<boolean> => {
+  try {
+    return argon2.verify(hash, plain)
+  } catch (error) {
+    return false
+  }
+}
 
 export const generateRandomToken = (): string => {
   return randomBytes(32).toString("base64url")

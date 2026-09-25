@@ -11,10 +11,12 @@ export interface SessionMetadata {
 export const createSession = async (
   userId: string,
   metadata?: SessionMetadata,
-): Promise<{ rawToken: string; expireAt: string }> => {
+): Promise<{ rawToken: string; expiresAt: string }> => {
     // generate token and expiry date
     const rawToken = generateRandomToken();
-    const expiresAt = new Date(Date.now() + SESSION_DURATION_MS)
+    const expiresAtDate = new Date(Date.now() + SESSION_DURATION_MS);
+    const expiresAt = expiresAtDate.toISOString();
     // save session in the db
-    await db.orm.public.Session.create({userId, tokenHash: hashToken(rawToken), expiresAt})
+    await db.orm.public.Session.create({ userId, tokenHash: hashToken(rawToken), expiresAt, ipAddress: metadata?.ip, userAgent: metadata?.userAgent?.slice(0, 255) })
+    return {rawToken, expiresAt}
 };

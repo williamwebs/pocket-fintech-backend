@@ -87,6 +87,9 @@ model Session {
   expiresAt         TimestamptzString
   createdAt         TimestamptzString @default(now())
 
+  ipAddress         String?
+  userAgent         String?
+
   @@index([userId])
 }
 
