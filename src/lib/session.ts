@@ -105,3 +105,12 @@ export const invalidateAllUserSession = async (
     revokedAt: new Date().toISOString(),
   });
 };
+
+export const invalidateUserSession = async (
+  tokenHash: string,
+): Promise<void> => {
+  await db.orm.public.Session.where({ tokenHash }).update({
+    isRevoked: true,
+    revokedAt: new Date().toISOString(),
+  });
+};

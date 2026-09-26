@@ -1,7 +1,17 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
-import { createSession, rotateSession } from "../lib/session";
+import {
+  createSession,
+  invalidateAllUserSession,
+  invalidateUserSession,
+  rotateSession,
+} from "../lib/session";
 import { db } from "../prisma/db";
-import { DUMMY_PASSWORD, hashPassword, verifyPassword } from "../utils/hash";
+import {
+  DUMMY_PASSWORD,
+  hashPassword,
+  hashToken,
+  verifyPassword,
+} from "../utils/hash";
 import { signAccessToken } from "../utils/tokens";
 import { SigninInput, SignupInput } from "../validators/auth.validator";
 import { ApiError } from "../utils/apiError";
@@ -92,4 +102,23 @@ export const refresh = async (
     expiresAt: newSessionResult.expiresAt,
     accessToken,
   };
+};
+
+export const logout = async (
+  refreshToken: string,
+  allDevices: boolean = false,
+) => {
+  const tokenHash: string = hashToken(refreshToken);
+
+  const session = await db.orm.public.Session.where({ tokenHash }).first();
+
+  if (!session) return;
+
+  if (session.isRevoked) return;
+
+  if (allDevices) {
+    await invalidateAllUserSession(session.userId);
+  } else {
+    await invalidateUserSession(session.tokenHash);
+  }
 };

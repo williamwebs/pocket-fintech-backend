@@ -21,5 +21,14 @@ export const setSessionCookie = (
 };
 
 export const getSessionCookie = (req: Request): string | undefined => {
-return req.cookies?.[COOKIE_NAME]
-}
+  return req.cookies?.[COOKIE_NAME];
+};
+
+export const deleteSessionCookie = (res: Response): void => {
+  res.clearCookie(COOKIE_NAME, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: "lax",
+    path: "/",
+  });
+};

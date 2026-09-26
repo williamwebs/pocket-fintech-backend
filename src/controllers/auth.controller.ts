@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler";
 import * as authService from "../services/auth.service.js";
-import { getSessionCookie, setSessionCookie } from "../utils/cookie";
+import {
+  deleteSessionCookie,
+  getSessionCookie,
+  setSessionCookie,
+} from "../utils/cookie";
 import { ApiError } from "../utils/apiError";
 import { success } from "zod";
 
@@ -36,7 +40,7 @@ export const signin = asyncHandler(async (req: Request, res: Response) => {
 export const refresh = asyncHandler(async (req: Request, res: Response) => {
   const currentRefeshToken = getSessionCookie(req);
 
-  if (!currentRefeshToken) throw new ApiError(401, "No refresh token");
+  if (!currentRefeshToken) throw new ApiError(401, "No refresh token"); // return res.status here
 
   const metadata = {
     userAgent: req.headers["user-agent"],
@@ -55,5 +59,25 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
       message: "Session refreshed successfully",
       accessToken,
     },
+  });
+});
+
+export const logout = asyncHandler(async (req: Request, res: Response) => {
+  const refreshToken = getSessionCookie(req);
+
+  if (!refreshToken)
+    return res
+      .status(200)
+      .json({ success: true, message: "Already logged out" });
+
+  const { allDevices } = req.body;
+
+  await authService.logout(refreshToken, allDevices);
+
+  deleteSessionCookie(res);
+
+  return res.status(200).json({
+    success: true,
+    message: "User logged out successfully!",   
   });
 });

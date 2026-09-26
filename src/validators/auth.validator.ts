@@ -41,5 +41,12 @@ export const refreshTokenSchema = z.object({
   }),
 });
 
+export const logoutSchema = z.object({
+  body: z.object({
+    allDevices: z.boolean().optional().default(false),
+  }),
+});
+
 export type SignupInput = z.infer<typeof signupSchema>["body"];
 export type SigninInput = z.infer<typeof signinSchema>["body"];
+export type LogoutInput = z.infer<typeof logoutSchema>["body"];
