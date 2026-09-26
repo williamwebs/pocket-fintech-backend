@@ -11,4 +11,5 @@ export const {
   DATABASE_URL,
   ACCESS_TOKEN_SECRET,
   REFRESH_TOKEN_SECRET,
+  SESSION_COOKIE_NAME,
 } = process.env;

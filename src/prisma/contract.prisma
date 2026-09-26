@@ -76,16 +76,17 @@ model User {
 }
 
 model Session {
-  id                String            @id @default(uuid())
+  id                String             @id @default(uuid())
   userId            String
-  user              User              @relation(fields:[userId], references:[id])
-  tokenHash         String            @unique // SHA-256 of the refresh token — never store it raw
-  isRevoked         Boolean           @default(false)
-  replacedByTokenId String?           @unique
-  replacedBy        Session?          @relation("TokenRotation", fields:[replacedByTokenId], references:[id])
-  replacedFrom      Session?          @relation("TokenRotation")
+  user              User               @relation(fields:[userId], references:[id])
+  tokenHash         String             @unique // SHA-256 of the refresh token — never store it raw
+  isRevoked         Boolean            @default(false)
+  revokedAt         TimestamptzString?
+  replacedByTokenId String?            @unique
+  replacedBy        Session?           @relation("TokenRotation", fields:[replacedByTokenId], references:[id])
+  replacedFrom      Session?           @relation("TokenRotation")
   expiresAt         TimestamptzString
-  createdAt         TimestamptzString @default(now())
+  createdAt         TimestamptzString  @default(now())
 
   ipAddress         String?
   userAgent         String?

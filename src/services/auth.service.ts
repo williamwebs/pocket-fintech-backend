@@ -1,5 +1,5 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
-import { createSession } from "../lib/session";
+import { createSession, rotateSession } from "../lib/session";
 import { db } from "../prisma/db";
 import { DUMMY_PASSWORD, hashPassword, verifyPassword } from "../utils/hash";
 import { signAccessToken } from "../utils/tokens";
@@ -41,6 +41,7 @@ export const signup = async (
       throw new ApiError(409, "An account with this email already exists");
     }
     logger.error(`[AUTH_SERVICE] Error creating user: ${error}`);
+    throw error;
   }
 };
 
@@ -71,6 +72,24 @@ export const signin = async (
   const { rawToken, expiresAt } = await createSession(user.id, metadata);
   const accessToken = signAccessToken({ userId: user.id, role: user.role });
   return { user: safeUser, accessToken, session: { rawToken, expiresAt } };
+};
 
-  // if there is no user with that email or user returns null, throw an error
+export const refresh = async (
+  currentRawToken: string,
+  metadata?: { userAgent?: string; ipAddress?: string },
+) => {
+  const newSessionResult = await rotateSession(currentRawToken, metadata);
+
+  if (!newSessionResult) throw new ApiError(401, "Invalid session");
+
+  const accessToken = signAccessToken({
+    userId: newSessionResult.userId,
+    role: newSessionResult.role,
+  });
+
+  return {
+    newRefreshToken: newSessionResult.rawToken,
+    expiresAt: newSessionResult.expiresAt,
+    accessToken,
+  };
 };

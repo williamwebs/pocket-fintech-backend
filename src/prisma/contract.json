@@ -1106,6 +1106,13 @@
                   "kind": "scalar"
                 }
               },
+              "revokedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
               "tokenHash": {
                 "nullable": false,
                 "type": {
@@ -1197,6 +1204,9 @@
                 },
                 "replacedByTokenId": {
                   "column": "replacedByTokenId"
+                },
+                "revokedAt": {
+                  "column": "revokedAt"
                 },
                 "tokenHash": {
                   "column": "tokenHash"
@@ -2419,6 +2429,11 @@
                   "nativeType": "text",
                   "nullable": true
                 },
+                "revokedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
                 "tokenHash": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -2826,7 +2841,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "0fb53aa2e8fc9d345bb170bdf089b19003f73815f5d14f97882c3a40e674f9c9"
+    "storageHash": "9b7dcc1dce263976e0de4f0dd9211119d610063880e6a9167ed52afccb3dbe87"
   },
   "execution": {
     "executionHash": "0ab4463d62bc3beee42aacd970f7cc0726c7760771ebcca21f90e2b9a64a6408",

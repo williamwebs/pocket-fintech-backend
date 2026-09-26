@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser"
 import cors from "cors"
 import morgan from "morgan"
 import logger, { logStream } from "./utils/logger.js"
+import authRouter from "./routes/auth.routes.js"
 
 const app = express()
 
@@ -21,7 +22,8 @@ app.use(morgan(morganFormat, {stream: logStream}))
 app.use(express.json())
 app.use(cookieParser())
 
-app.get("/health", (_req, res)=> res.json({status: "ok"}))
+app.get("/health", (_req, res) => res.json({ status: "ok" }))
+app.use('/api/v1/auth', authRouter)
 
 app.use((_req, res) => res.status(404).json({ error: "Not found" }))
 // middleware for handling errors
