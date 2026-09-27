@@ -13,9 +13,15 @@ import {
   verifyPassword,
 } from "../utils/hash";
 import { signAccessToken } from "../utils/tokens";
-import { SigninInput, SignupInput } from "../validators/auth.validator";
+import {
+  ResetPasswordInput,
+  SigninInput,
+  SignupInput,
+} from "../validators/auth.validator";
 import { ApiError } from "../utils/apiError";
 import logger from "../utils/logger";
+import { generateUserOtp } from "../lib/otp";
+import { NODE_ENV } from "../config/env";
 
 export const signup = async (
   input: SignupInput,
@@ -121,4 +127,18 @@ export const logout = async (
   } else {
     await invalidateUserSession(session.tokenHash);
   }
+};
+
+export const requestPasswordReset = async (input: ResetPasswordInput) => {
+  const { email } = input;
+  const user = await db.orm.public.User.where({ email }).first();
+
+  if (!user) return null;
+
+  const otp = await generateUserOtp(user.id);
+
+  if (NODE_ENV === "development")
+    logger.info(`[OTP_SERVICE] OTP code sent: ${otp}`);
+
+  return { otp };
 };

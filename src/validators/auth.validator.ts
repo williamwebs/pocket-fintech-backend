@@ -47,6 +47,13 @@ export const logoutSchema = z.object({
   }),
 });
 
+export const resetPasswordSchema = z.object({
+  body: z.object({
+    email: z.email("Invaid email address")
+  })
+})
+
 export type SignupInput = z.infer<typeof signupSchema>["body"];
 export type SigninInput = z.infer<typeof signinSchema>["body"];
 export type LogoutInput = z.infer<typeof logoutSchema>["body"];
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>["body"]

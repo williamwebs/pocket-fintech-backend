@@ -54,25 +54,26 @@ enum IdempotencyStatus {
 }
 
 model User {
-  id               String                     @id @default(uuid())
-  name             String?
-  email            String                     @unique
-  role             Role                       @default(USER)
-  phone            String                     @unique
-  passwordHash     String
-  kycStatus        KycStatus                  @default(PENDING)
-  kycTier          Int                        @default(0) // 0 = unverified, 1/2/3 per Anchor's tiers
-  anchorCustomerId String?                    @unique
-  createdAt        TimestamptzString          @default(now())
-  updatedAt        temporal.updatedAtString()
+  id                String                     @id @default(uuid())
+  name              String?
+  email             String                     @unique
+  role              Role                       @default(USER)
+  phone             String                     @unique
+  passwordHash      String
+  kycStatus         KycStatus                  @default(PENDING)
+  kycTier           Int                        @default(0) // 0 = unverified, 1/2/3 per Anchor's tiers
+  anchorCustomerId  String?                    @unique
+  createdAt         TimestamptzString          @default(now())
+  updatedAt         temporal.updatedAtString()
 
-  virtualAccount   VirtualAccount?
-  pockets          Pocket[]
-  sessions         Session[]
-  kycVerifications KycVerification[]
-  beneficiaries    Beneficiary[]
-  purchases        Purchase[]
-  idempotencyKeys  IdempotencyKey[]
+  virtualAccount    VirtualAccount?
+  pockets           Pocket[]
+  sessions          Session[]
+  kycVerifications  KycVerification[]
+  beneficiaries     Beneficiary[]
+  purchases         Purchase[]
+  idempotencyKeys   IdempotencyKey[]
+  passwordResetCode PasswordResetCode[]
 }
 
 model Session {
@@ -207,4 +208,16 @@ model IdempotencyKey {
   responseBody Json? // cached response, replayed if the same key comes in again
   createdAt    TimestamptzString @default(now())
   expiresAt    TimestamptzString // TTL — clean these up periodically
+}
+
+model PasswordResetCode {
+  id        String            @id @default(uuid())
+  userId    String
+  user      User              @relation(fields:[userId], references:[id], onDelete: Cascade)
+  codeHash  String
+  attempts  Int               @default(0)
+  expiresAt TimestamptzString
+  createdAt TimestamptzString @default(now())
+
+  @@index([userId])
 }

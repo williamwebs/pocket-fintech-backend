@@ -20,6 +20,10 @@
       "model": "LedgerEntry",
       "namespace": "public"
     },
+    "passwordResetCode": {
+      "model": "PasswordResetCode",
+      "namespace": "public"
+    },
     "pocket": {
       "model": "Pocket",
       "namespace": "public"
@@ -684,6 +688,94 @@
               },
               "namespaceId": "public",
               "table": "ledgerEntry"
+            }
+          },
+          "PasswordResetCode": {
+            "fields": {
+              "attempts": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "codeHash": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "expiresAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "attempts": {
+                  "column": "attempts"
+                },
+                "codeHash": {
+                  "column": "codeHash"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "expiresAt": {
+                  "column": "expiresAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "passwordResetCode"
             }
           },
           "Pocket": {
@@ -1357,6 +1449,21 @@
                 },
                 "to": {
                   "model": "KycVerification",
+                  "namespace": "public"
+                }
+              },
+              "passwordResetCode": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "PasswordResetCode",
                   "namespace": "public"
                 }
               },
@@ -2073,6 +2180,83 @@
                   ],
                   "name": "ledgerEntry_webhookEventId_idx_8852da26",
                   "prefix": "ledgerEntry_webhookEventId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "passwordResetCode": {
+              "columns": {
+                "attempts": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "codeHash": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "expiresAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "passwordResetCode"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "passwordResetCode_userId_idx_a489d58a",
+                  "prefix": "passwordResetCode_userId_idx",
                   "unique": false
                 }
               ],
@@ -2841,10 +3025,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "9b7dcc1dce263976e0de4f0dd9211119d610063880e6a9167ed52afccb3dbe87"
+    "storageHash": "dbed73ac8b4f72c47732a29a965a01f7eeb8bb918f5396c70c19898a6cee7a51"
   },
   "execution": {
-    "executionHash": "0ab4463d62bc3beee42aacd970f7cc0726c7760771ebcca21f90e2b9a64a6408",
+    "executionHash": "11a67859692e02cf193864d38a67e3e3e67bce5b97aad1f6e4988f9b63ec6624",
     "mutations": {
       "defaults": [
         {
@@ -2889,6 +3073,17 @@
             "column": "id",
             "namespace": "public",
             "table": "ledgerEntry"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "passwordResetCode"
           }
         },
         {

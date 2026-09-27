@@ -78,6 +78,23 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 
   return res.status(200).json({
     success: true,
-    message: "User logged out successfully!",   
+    message: "User logged out successfully!",
   });
 });
+
+export const requestPasswordReset = asyncHandler(
+  async (req: Request, res: Response) => {
+    const result = await authService.requestPasswordReset(req.body);
+
+    if (result) {
+      // call email service here passing result.otp
+    }
+    return res.status(200).json({
+      success: true,
+      data: {
+        message:
+          "If an account exists with that email, a verification code has been sent.",
+      },
+    });
+  },
+);

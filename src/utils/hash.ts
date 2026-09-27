@@ -1,4 +1,5 @@
 import argon2 from "argon2"
+import crypto from "crypto"
 import { createHash, randomBytes } from "crypto";
 
 const PASSWORD_HASH_OPTIONS = {
@@ -28,4 +29,8 @@ export const generateRandomToken = (): string => {
 
 export const hashToken = (rawToken: string): string => {
   return createHash("sha256").update(rawToken).digest("hex")
+}
+
+export const generateRandomOtp = (): string => {
+  return crypto.randomInt(100000, 1000000).toString();
 }
