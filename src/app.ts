@@ -6,6 +6,7 @@ import cors from "cors"
 import morgan from "morgan"
 import logger, { logStream } from "./utils/logger.js"
 import authRouter from "./routes/auth.routes.js"
+import { errorMiddleware } from "./middlewares/error.middleware.js"
 
 const app = express()
 
@@ -26,7 +27,8 @@ app.get("/health", (_req, res) => res.json({ status: "ok" }))
 app.use('/api/v1/auth', authRouter)
 
 app.use((_req, res) => res.status(404).json({ error: "Not found" }))
-// middleware for handling errors
+
+app.use(errorMiddleware)
 
 app.listen(PORT, () => {
     logger.info(`pocket api is running on localhost:${PORT}`)

@@ -53,7 +53,25 @@ export const resetPasswordSchema = z.object({
   })
 })
 
+export const resetPasswordWithOtpSchema = z.object({
+  body: z.object({
+    otp: z.string().min(6, "OTP is required"),
+    email: z.email("Invalid email address"),
+    newPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Password must cntain at east one uppercase letter")
+      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+      .regex(/[0-9]/, "Password must contain at least one number")
+      .regex(
+        /[^A-Za-z0-9]/,
+        "Password must contain at least one special character",
+      ),
+  })
+})
+
 export type SignupInput = z.infer<typeof signupSchema>["body"];
 export type SigninInput = z.infer<typeof signinSchema>["body"];
 export type LogoutInput = z.infer<typeof logoutSchema>["body"];
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>["body"]
+export type ResetPasswordWithOtpInput = z.infer<typeof resetPasswordWithOtpSchema>["body"]

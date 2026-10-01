@@ -15,6 +15,7 @@ import {
 import { signAccessToken } from "../utils/tokens";
 import {
   ResetPasswordInput,
+  ResetPasswordWithOtpInput,
   SigninInput,
   SignupInput,
 } from "../validators/auth.validator";
@@ -141,4 +142,85 @@ export const requestPasswordReset = async (input: ResetPasswordInput) => {
     logger.info(`[OTP_SERVICE] OTP code sent: ${otp}`);
 
   return { otp };
+};
+
+export const resetPasswordWithOtp = async (
+  input: ResetPasswordWithOtpInput,
+): Promise<void> => {
+  const { otp, email, newPassword } = input;
+
+  const user = await db.orm.public.User.where({ email }).first();
+
+  if (!user) {
+    await verifyPassword(DUMMY_PASSWORD, otp);
+    throw new ApiError(400, "Invalid or expired verification code.");
+  }
+
+  const record = await db.orm.public.PasswordResetCode.where({
+    userId: user.id,
+  }).first();
+
+  if (!record) {
+    await verifyPassword(DUMMY_PASSWORD, otp);
+    throw new ApiError(400, "Invalid or expired verification code.");
+  }
+
+  if (new Date(record.expiresAt).getTime() < Date.now()) {
+    await db.orm.public.PasswordResetCode.where({ id: record.id }).delete();
+    throw new ApiError(400, "Verification code has expired.");
+  }
+
+  if (record.attempts >= 5) {
+    await db.orm.public.PasswordResetCode.where({ id: record.id }).delete();
+    throw new ApiError(
+      429,
+      "Too many failed attempts. Please request a new code.",
+    );
+  }
+
+  const isValid = await verifyPassword(record.codeHash, otp);
+
+  if (!isValid) {
+    // Atomic increment guarded by the same cap check, so two concurrent
+    // wrong guesses can't both slip past the attempts limit.
+    const plan = db.sql.public.passwordResetCode
+      .update((f, fns) => ({
+        attempts: fns.raw`${f.attempts} + 1`.returns("pg/int4@1"),
+      }))
+      .where((f, fns) =>
+        fns.and(fns.eq(f.id, record.id), fns.lt(f.attempts, 5)),
+      )
+      .returning("id", "attempts")
+      .build();
+
+    const rows = await db.runtime().query(plan);
+
+    if (rows.length === 0) {
+      // Cap was already hit by a concurrent request — same response either way.
+      throw new ApiError(
+        429,
+        "Too many failed attempts. Please request a new code.",
+      );
+    }
+
+    throw new ApiError(400, "Invalid verification code.");
+  }
+
+  const hashedPassword = await hashPassword(newPassword);
+
+  await db.transaction(async (tx) => {
+    await tx.orm.public.User.where({ email }).update({
+      passwordHash: hashedPassword,
+    });
+
+    await tx.orm.public.Session.where({
+      userId: user.id,
+      isRevoked: false,
+    }).updateAll({
+      isRevoked: true,
+      revokedAt: new Date().toISOString(),
+    });
+
+    await tx.orm.public.PasswordResetCode.where({ id: record.id }).delete();
+  });
 };

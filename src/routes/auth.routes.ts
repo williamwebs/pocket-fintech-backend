@@ -4,6 +4,7 @@ import {
   logout,
   refresh,
   requestPasswordReset,
+  resetPasswordWithOtp,
   signin,
   signup,
 } from "../controllers/auth.controller";
@@ -12,6 +13,7 @@ import {
   logoutSchema,
   refreshTokenSchema,
   resetPasswordSchema,
+  resetPasswordWithOtpSchema,
   signinSchema,
   signupSchema,
 } from "../validators/auth.validator";
@@ -23,5 +25,6 @@ authRouter.post("/signin", loginRateLimiter, validate(signinSchema), signin);
 authRouter.post("/logout", validate(logoutSchema), logout);
 authRouter.post("/refresh", refresh);
 authRouter.post("/request-otp", resetPasswordRateLimiter, validate(resetPasswordSchema), requestPasswordReset)
+authRouter.post("/reset-password", resetPasswordRateLimiter, validate(resetPasswordWithOtpSchema), resetPasswordWithOtp)
 
 export default authRouter;

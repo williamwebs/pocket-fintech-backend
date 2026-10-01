@@ -98,3 +98,16 @@ export const requestPasswordReset = asyncHandler(
     });
   },
 );
+
+export const resetPasswordWithOtp = asyncHandler(
+  async (req: Request, res: Response) => {
+    await authService.resetPasswordWithOtp(req.body);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        message: "Password has been reset successfully. Login again",
+      },
+    });
+  },
+);
