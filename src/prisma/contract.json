@@ -1337,6 +1337,13 @@
                   "kind": "scalar"
                 }
               },
+              "homeAddress": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
@@ -1539,6 +1546,9 @@
                 },
                 "email": {
                   "column": "email"
+                },
+                "homeAddress": {
+                  "column": "homeAddress"
                 },
                 "id": {
                   "column": "id"
@@ -2729,6 +2739,11 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "homeAddress": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "id": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -3025,7 +3040,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "dbed73ac8b4f72c47732a29a965a01f7eeb8bb918f5396c70c19898a6cee7a51"
+    "storageHash": "176d09143f4630e5d7abbf8f92f1cb42371fdfaf98185ad71296a33b1d36615a"
   },
   "execution": {
     "executionHash": "11a67859692e02cf193864d38a67e3e3e67bce5b97aad1f6e4988f9b63ec6624",

@@ -60,6 +60,7 @@ model User {
   role              Role                       @default(USER)
   phone             String                     @unique
   passwordHash      String
+  homeAddress       String? // optional for now, but required for KYC
   kycStatus         KycStatus                  @default(PENDING)
   kycTier           Int                        @default(0) // 0 = unverified, 1/2/3 per Anchor's tiers
   anchorCustomerId  String?                    @unique

@@ -11,7 +11,6 @@ import {
 import { validate } from "../middlewares/validate.middleware";
 import {
   logoutSchema,
-  refreshTokenSchema,
   resetPasswordSchema,
   resetPasswordWithOtpSchema,
   signinSchema,
