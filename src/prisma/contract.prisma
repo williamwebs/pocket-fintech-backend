@@ -64,6 +64,8 @@ model User {
   kycStatus         KycStatus                  @default(PENDING)
   kycTier           Int                        @default(0) // 0 = unverified, 1/2/3 per Anchor's tiers
   anchorCustomerId  String?                    @unique
+  isActive          Boolean                    @default(true)
+  deletedAt         TimestamptzString?
   createdAt         TimestamptzString          @default(now())
   updatedAt         temporal.updatedAtString()
 

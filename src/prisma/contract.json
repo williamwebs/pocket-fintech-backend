@@ -1330,6 +1330,13 @@
                   "kind": "scalar"
                 }
               },
+              "deletedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
               "email": {
                 "nullable": false,
                 "type": {
@@ -1348,6 +1355,13 @@
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "isActive": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
                   "kind": "scalar"
                 }
               },
@@ -1544,6 +1558,9 @@
                 "createdAt": {
                   "column": "createdAt"
                 },
+                "deletedAt": {
+                  "column": "deletedAt"
+                },
                 "email": {
                   "column": "email"
                 },
@@ -1552,6 +1569,9 @@
                 },
                 "id": {
                   "column": "id"
+                },
+                "isActive": {
+                  "column": "isActive"
                 },
                 "kycStatus": {
                   "column": "kycStatus"
@@ -2734,6 +2754,11 @@
                   "nativeType": "timestamptz",
                   "nullable": false
                 },
+                "deletedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
                 "email": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -2747,6 +2772,15 @@
                 "id": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
+                  "nullable": false
+                },
+                "isActive": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
                   "nullable": false
                 },
                 "kycStatus": {
@@ -3040,7 +3074,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "176d09143f4630e5d7abbf8f92f1cb42371fdfaf98185ad71296a33b1d36615a"
+    "storageHash": "1bb7cf00f1aea76f8e61d2f9518788537c227b3b5cd35a89ea7d64dbfc947ada"
   },
   "execution": {
     "executionHash": "11a67859692e02cf193864d38a67e3e3e67bce5b97aad1f6e4988f9b63ec6624",

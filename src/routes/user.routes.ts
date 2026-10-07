@@ -1,16 +1,16 @@
 import { Router } from "express";
 import { defaultRateLimiter } from "../middlewares/rateLimit";
 import { authenticate } from "../middlewares/authenticate.middleware";
-import { getUserById, me } from "../controllers/user.controller";
+import { deleteMe, deleteUserById, getUserById, me, updateMe } from "../controllers/user.controller";
 import { validate } from "../middlewares/validate.middleware";
-import { getUserByIdParamsSchema } from "../validators/user.validator";
+import { getUserByIdParamsSchema, updateProfileSchema } from "../validators/user.validator";
 
 const userRouter = Router();
 
 userRouter.get("/me", defaultRateLimiter, authenticate, me);
 userRouter.get("/:userId", defaultRateLimiter, authenticate, validate(getUserByIdParamsSchema), getUserById);
-userRouter.patch("/me", authenticate, defaultRateLimiter, (req, res) => "UPDATE USER PROFILE");
-userRouter.delete("/me", authenticate, defaultRateLimiter, (req, res) => "DELETE USER PROFILE");
-userRouter.delete("/:userId", authenticate, defaultRateLimiter, (req, res) => "DELETE SPECIFIC USER PROFILE");
+userRouter.patch("/me", defaultRateLimiter, authenticate, validate(updateProfileSchema), updateMe);
+userRouter.delete("/me", defaultRateLimiter, authenticate, deleteMe);
+userRouter.delete("/:userId", defaultRateLimiter, authenticate, validate(getUserByIdParamsSchema), deleteUserById);
 
 export default userRouter;
