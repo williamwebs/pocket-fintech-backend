@@ -4,8 +4,16 @@
   "target": "postgres",
   "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
   "roots": {
+    "address": {
+      "model": "Address",
+      "namespace": "public"
+    },
     "beneficiary": {
       "model": "Beneficiary",
+      "namespace": "public"
+    },
+    "deposit": {
+      "model": "Deposit",
       "namespace": "public"
     },
     "idempotencyKey": {
@@ -34,6 +42,10 @@
     },
     "session": {
       "model": "Session",
+      "namespace": "public"
+    },
+    "transfer": {
+      "model": "Transfer",
       "namespace": "public"
     },
     "user": {
@@ -74,6 +86,36 @@
               }
             ]
           },
+          "DepositStatus": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "RECEIVED",
+                "value": "RECEIVED"
+              },
+              {
+                "name": "COMPLETED",
+                "value": "COMPLETED"
+              }
+            ]
+          },
+          "Gender": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "MALE",
+                "value": "MALE"
+              },
+              {
+                "name": "FEMALE",
+                "value": "FEMALE"
+              },
+              {
+                "name": "OTHERS",
+                "value": "OTHERS"
+              }
+            ]
+          },
           "IdempotencyStatus": {
             "codecId": "pg/text@1",
             "members": [
@@ -87,12 +129,49 @@
               }
             ]
           },
+          "KycIdType": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "DRIVERS_LICENSE",
+                "value": "DRIVERS_LICENSE"
+              },
+              {
+                "name": "VOTERS_CARD",
+                "value": "VOTERS_CARD"
+              },
+              {
+                "name": "PASSPORT",
+                "value": "PASSPORT"
+              },
+              {
+                "name": "NATIONAL_ID",
+                "value": "NATIONAL_ID"
+              },
+              {
+                "name": "NIN_SLIP",
+                "value": "NIN_SLIP"
+              }
+            ]
+          },
           "KycStatus": {
             "codecId": "pg/text@1",
             "members": [
               {
+                "name": "NOT_SUBMITTED",
+                "value": "NOT_SUBMITTED"
+              },
+              {
                 "name": "PENDING",
                 "value": "PENDING"
+              },
+              {
+                "name": "ACTION_REQUIRED",
+                "value": "ACTION_REQUIRED"
+              },
+              {
+                "name": "MANUAL_REVIEW",
+                "value": "MANUAL_REVIEW"
               },
               {
                 "name": "APPROVED",
@@ -127,6 +206,18 @@
               {
                 "name": "PURCHASE",
                 "value": "PURCHASE"
+              },
+              {
+                "name": "PURCHASE_REVERSAL",
+                "value": "PURCHASE_REVERSAL"
+              },
+              {
+                "name": "TRANSFER_OUT",
+                "value": "TRANSFER_OUT"
+              },
+              {
+                "name": "TRANSFER_REVERSAL",
+                "value": "TRANSFER_REVERSAL"
               },
               {
                 "name": "UNLOCK_TRANSFER",
@@ -205,9 +296,171 @@
                 "value": "SUPERADMIN"
               }
             ]
+          },
+          "TransferChannel": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "NIP",
+                "value": "NIP"
+              },
+              {
+                "name": "BOOK",
+                "value": "BOOK"
+              }
+            ]
+          },
+          "TransferStatus": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "PENDING",
+                "value": "PENDING"
+              },
+              {
+                "name": "SUCCESS",
+                "value": "SUCCESS"
+              },
+              {
+                "name": "FAILED",
+                "value": "FAILED"
+              },
+              {
+                "name": "REVERSED",
+                "value": "REVERSED"
+              }
+            ]
           }
         },
         "models": {
+          "Address": {
+            "fields": {
+              "addressLine_1": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "addressLine_2": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "city": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "country": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "postalCode": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "state": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "addressLine_1": {
+                  "column": "addressLine_1"
+                },
+                "addressLine_2": {
+                  "column": "addressLine_2"
+                },
+                "city": {
+                  "column": "city"
+                },
+                "country": {
+                  "column": "country"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "postalCode": {
+                  "column": "postalCode"
+                },
+                "state": {
+                  "column": "state"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "address"
+            }
+          },
           "Beneficiary": {
             "fields": {
               "accountName": {
@@ -268,6 +521,21 @@
               }
             },
             "relations": {
+              "transfers": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "beneficiaryId"
+                  ]
+                },
+                "to": {
+                  "model": "Transfer",
+                  "namespace": "public"
+                }
+              },
               "user": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -316,6 +584,170 @@
               "table": "beneficiary"
             }
           },
+          "Deposit": {
+            "fields": {
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "anchorAccountId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "anchorTransferId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "completedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "senderAccountNumber": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "senderBankName": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "senderName": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "sessionId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "DepositStatus",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "amount": {
+                  "column": "amount"
+                },
+                "anchorAccountId": {
+                  "column": "anchorAccountId"
+                },
+                "anchorTransferId": {
+                  "column": "anchorTransferId"
+                },
+                "completedAt": {
+                  "column": "completedAt"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "senderAccountNumber": {
+                  "column": "senderAccountNumber"
+                },
+                "senderBankName": {
+                  "column": "senderBankName"
+                },
+                "senderName": {
+                  "column": "senderName"
+                },
+                "sessionId": {
+                  "column": "sessionId"
+                },
+                "status": {
+                  "column": "status"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "deposit"
+            }
+          },
           "IdempotencyKey": {
             "fields": {
               "createdAt": {
@@ -347,6 +779,13 @@
                 }
               },
               "key": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "requestHash": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
@@ -416,6 +855,9 @@
                 "key": {
                   "column": "key"
                 },
+                "requestHash": {
+                  "column": "requestHash"
+                },
                 "responseBody": {
                   "column": "responseBody"
                 },
@@ -439,22 +881,76 @@
                   "kind": "scalar"
                 }
               },
-              "documentType": {
-                "nullable": true,
+              "dateOfBirth": {
+                "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
-              "documentUrl": {
-                "nullable": true,
+              "firstName": {
+                "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
+                }
+              },
+              "gender": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "Gender",
+                  "namespaceId": "public",
+                  "plane": "domain"
                 }
               },
               "id": {
                 "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "idExpiryDate": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "idType": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "KycIdType",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "lastEvent": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "lastName": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "middleName": {
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -494,6 +990,13 @@
                   "kind": "scalar"
                 }
               },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
               "userId": {
                 "nullable": false,
                 "type": {
@@ -525,14 +1028,32 @@
                 "createdAt": {
                   "column": "createdAt"
                 },
-                "documentType": {
-                  "column": "documentType"
+                "dateOfBirth": {
+                  "column": "dateOfBirth"
                 },
-                "documentUrl": {
-                  "column": "documentUrl"
+                "firstName": {
+                  "column": "firstName"
+                },
+                "gender": {
+                  "column": "gender"
                 },
                 "id": {
                   "column": "id"
+                },
+                "idExpiryDate": {
+                  "column": "idExpiryDate"
+                },
+                "idType": {
+                  "column": "idType"
+                },
+                "lastEvent": {
+                  "column": "lastEvent"
+                },
+                "lastName": {
+                  "column": "lastName"
+                },
+                "middleName": {
+                  "column": "middleName"
                 },
                 "rejectionReason": {
                   "column": "rejectionReason"
@@ -546,6 +1067,9 @@
                 "tier": {
                   "column": "tier"
                 },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
                 "userId": {
                   "column": "userId"
                 }
@@ -557,6 +1081,13 @@
           "LedgerEntry": {
             "fields": {
               "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "balanceAfter": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/int8@1",
@@ -663,6 +1194,9 @@
               "fields": {
                 "amount": {
                   "column": "amount"
+                },
+                "balanceAfter": {
+                  "column": "balanceAfter"
                 },
                 "batchReference": {
                   "column": "batchReference"
@@ -835,6 +1369,20 @@
                   "kind": "scalar"
                 }
               },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "nameKey": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "qstashMessageId": {
                 "nullable": true,
                 "type": {
@@ -908,6 +1456,21 @@
                   "namespace": "public"
                 }
               },
+              "transfers": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "pocketId"
+                  ]
+                },
+                "to": {
+                  "model": "Transfer",
+                  "namespace": "public"
+                }
+              },
               "user": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -948,6 +1511,12 @@
                 "maturityDate": {
                   "column": "maturityDate"
                 },
+                "name": {
+                  "column": "name"
+                },
+                "nameKey": {
+                  "column": "nameKey"
+                },
                 "qstashMessageId": {
                   "column": "qstashMessageId"
                 },
@@ -977,7 +1546,14 @@
                   "kind": "scalar"
                 }
               },
-              "commissionEarned": {
+              "anchorBillId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "commissionAmount": {
                 "nullable": true,
                 "type": {
                   "codecId": "pg/int8@1",
@@ -988,6 +1564,20 @@
                 "nullable": false,
                 "type": {
                   "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "detail": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/json@1",
+                  "kind": "scalar"
+                }
+              },
+              "failureReason": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
@@ -1012,7 +1602,14 @@
                   "kind": "scalar"
                 }
               },
-              "providerReference": {
+              "productSlug": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "providerSlug": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
@@ -1021,6 +1618,13 @@
               },
               "recipientPhone": {
                 "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "reference": {
+                "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -1113,11 +1717,20 @@
                 "amount": {
                   "column": "amount"
                 },
-                "commissionEarned": {
-                  "column": "commissionEarned"
+                "anchorBillId": {
+                  "column": "anchorBillId"
+                },
+                "commissionAmount": {
+                  "column": "commissionAmount"
                 },
                 "createdAt": {
                   "column": "createdAt"
+                },
+                "detail": {
+                  "column": "detail"
+                },
+                "failureReason": {
+                  "column": "failureReason"
                 },
                 "id": {
                   "column": "id"
@@ -1128,11 +1741,17 @@
                 "pocketId": {
                   "column": "pocketId"
                 },
-                "providerReference": {
-                  "column": "providerReference"
+                "productSlug": {
+                  "column": "productSlug"
+                },
+                "providerSlug": {
+                  "column": "providerSlug"
                 },
                 "recipientPhone": {
                   "column": "recipientPhone"
+                },
+                "reference": {
+                  "column": "reference"
                 },
                 "smartCardNumber": {
                   "column": "smartCardNumber"
@@ -1314,6 +1933,248 @@
               "table": "session"
             }
           },
+          "Transfer": {
+            "fields": {
+              "accountName": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "accountNumber": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "anchorTransferId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "bankCode": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "beneficiaryId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "channel": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "TransferChannel",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "failureReason": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "fee": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "narration": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "pocketId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "reference": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "TransferStatus",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "beneficiary": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "beneficiaryId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Beneficiary",
+                  "namespace": "public"
+                }
+              },
+              "pocket": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "pocketId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Pocket",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "accountName": {
+                  "column": "accountName"
+                },
+                "accountNumber": {
+                  "column": "accountNumber"
+                },
+                "amount": {
+                  "column": "amount"
+                },
+                "anchorTransferId": {
+                  "column": "anchorTransferId"
+                },
+                "bankCode": {
+                  "column": "bankCode"
+                },
+                "beneficiaryId": {
+                  "column": "beneficiaryId"
+                },
+                "channel": {
+                  "column": "channel"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "failureReason": {
+                  "column": "failureReason"
+                },
+                "fee": {
+                  "column": "fee"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "narration": {
+                  "column": "narration"
+                },
+                "pocketId": {
+                  "column": "pocketId"
+                },
+                "reference": {
+                  "column": "reference"
+                },
+                "status": {
+                  "column": "status"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "transfer"
+            }
+          },
           "User": {
             "fields": {
               "anchorCustomerId": {
@@ -1339,13 +2200,6 @@
               },
               "email": {
                 "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "homeAddress": {
-                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -1428,6 +2282,22 @@
               }
             },
             "relations": {
+              "address": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Address",
+                  "namespace": "public"
+                }
+              },
               "beneficiaries": {
                 "cardinality": "1:N",
                 "on": {
@@ -1440,6 +2310,21 @@
                 },
                 "to": {
                   "model": "Beneficiary",
+                  "namespace": "public"
+                }
+              },
+              "deposits": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Deposit",
                   "namespace": "public"
                 }
               },
@@ -1533,6 +2418,21 @@
                   "namespace": "public"
                 }
               },
+              "transfers": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Transfer",
+                  "namespace": "public"
+                }
+              },
               "virtualAccount": {
                 "cardinality": "1:1",
                 "nullable": true,
@@ -1563,9 +2463,6 @@
                 },
                 "email": {
                   "column": "email"
-                },
-                "homeAddress": {
-                  "column": "homeAddress"
                 },
                 "id": {
                   "column": "id"
@@ -1601,8 +2498,15 @@
           },
           "VirtualAccount": {
             "fields": {
+              "accountName": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "accountNumber": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -1615,10 +2519,31 @@
                   "kind": "scalar"
                 }
               },
-              "bankName": {
-                "nullable": false,
+              "anchorAccountNumberId": {
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "bankName": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "bankNipCode": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "closedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
                   "kind": "scalar"
                 }
               },
@@ -1633,6 +2558,20 @@
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "isFrozen": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
                   "kind": "scalar"
                 }
               },
@@ -1664,20 +2603,38 @@
             },
             "storage": {
               "fields": {
+                "accountName": {
+                  "column": "accountName"
+                },
                 "accountNumber": {
                   "column": "accountNumber"
                 },
                 "anchorAccountId": {
                   "column": "anchorAccountId"
                 },
+                "anchorAccountNumberId": {
+                  "column": "anchorAccountNumberId"
+                },
                 "bankName": {
                   "column": "bankName"
+                },
+                "bankNipCode": {
+                  "column": "bankNipCode"
+                },
+                "closedAt": {
+                  "column": "closedAt"
                 },
                 "createdAt": {
                   "column": "createdAt"
                 },
                 "id": {
                   "column": "id"
+                },
+                "isFrozen": {
+                  "column": "isFrozen"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
                 },
                 "userId": {
                   "column": "userId"
@@ -1783,6 +2740,96 @@
       "public": {
         "entries": {
           "table": {
+            "address": {
+              "columns": {
+                "addressLine_1": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "addressLine_2": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "city": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "country": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "postalCode": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "state": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "address"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "userId"
+                  ]
+                }
+              ]
+            },
             "beneficiary": {
               "columns": {
                 "accountName": {
@@ -1873,6 +2920,136 @@
                 }
               ]
             },
+            "deposit": {
+              "checks": [
+                {
+                  "expression": "\"status\" IN ('RECEIVED', 'COMPLETED')",
+                  "name": "deposit_status_check_ddd992ed",
+                  "prefix": "deposit_status_check"
+                }
+              ],
+              "columns": {
+                "amount": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "anchorAccountId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "anchorTransferId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "completedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "senderAccountNumber": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "senderBankName": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "senderName": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "sessionId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "RECEIVED"
+                  },
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "DepositStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "deposit"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "deposit_userId_idx_a489d58a",
+                  "prefix": "deposit_userId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "anchorTransferId"
+                  ]
+                }
+              ]
+            },
             "idempotencyKey": {
               "checks": [
                 {
@@ -1907,6 +3084,11 @@
                   "nullable": false
                 },
                 "key": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "requestHash": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
@@ -1973,6 +3155,7 @@
               "uniques": [
                 {
                   "columns": [
+                    "userId",
                     "key"
                   ]
                 }
@@ -1981,8 +3164,18 @@
             "kycVerification": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('PENDING', 'APPROVED', 'REJECTED')",
-                  "name": "kycVerification_status_check_56005a61",
+                  "expression": "\"gender\" IN ('MALE', 'FEMALE', 'OTHERS')",
+                  "name": "kycVerification_gender_check_19cdfbc7",
+                  "prefix": "kycVerification_gender_check"
+                },
+                {
+                  "expression": "\"idType\" IN ('DRIVERS_LICENSE', 'VOTERS_CARD', 'PASSPORT', 'NATIONAL_ID', 'NIN_SLIP')",
+                  "name": "kycVerification_idType_check_27d5a3eb",
+                  "prefix": "kycVerification_idType_check"
+                },
+                {
+                  "expression": "\"status\" IN ('NOT_SUBMITTED', 'PENDING', 'ACTION_REQUIRED', 'MANUAL_REVIEW', 'APPROVED', 'REJECTED')",
+                  "name": "kycVerification_status_check_ba91cf19",
                   "prefix": "kycVerification_status_check"
                 }
               ],
@@ -1996,20 +3189,62 @@
                   "nativeType": "timestamptz",
                   "nullable": false
                 },
-                "documentType": {
+                "dateOfBirth": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
-                  "nullable": true
+                  "nullable": false
                 },
-                "documentUrl": {
+                "firstName": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
-                  "nullable": true
+                  "nullable": false
+                },
+                "gender": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "Gender",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "id": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
+                },
+                "idExpiryDate": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "idType": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "KycIdType",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "lastEvent": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "lastName": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "middleName": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
                 },
                 "rejectionReason": {
                   "codecId": "pg/text@1",
@@ -2039,6 +3274,11 @@
                 "tier": {
                   "codecId": "pg/int4@1",
                   "nativeType": "int4",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
                   "nullable": false
                 },
                 "userId": {
@@ -2090,13 +3330,18 @@
                   "prefix": "ledgerEntry_direction_check"
                 },
                 {
-                  "expression": "\"type\" IN ('DEPOSIT_SPLIT', 'PURCHASE', 'UNLOCK_TRANSFER', 'MANUAL_ADJUSTMENT')",
-                  "name": "ledgerEntry_type_check_166e7665",
+                  "expression": "\"type\" IN ('DEPOSIT_SPLIT', 'PURCHASE', 'PURCHASE_REVERSAL', 'TRANSFER_OUT', 'TRANSFER_REVERSAL', 'UNLOCK_TRANSFER', 'MANUAL_ADJUSTMENT')",
+                  "name": "ledgerEntry_type_check_f4d30da1",
                   "prefix": "ledgerEntry_type_check"
                 }
               ],
               "columns": {
                 "amount": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "balanceAfter": {
                   "codecId": "pg/int8@1",
                   "nativeType": "int8",
                   "nullable": false
@@ -2190,14 +3435,6 @@
               "indexes": [
                 {
                   "columns": [
-                    "batchReference"
-                  ],
-                  "name": "ledgerEntry_batchReference_idx_67f1944c",
-                  "prefix": "ledgerEntry_batchReference_idx",
-                  "unique": false
-                },
-                {
-                  "columns": [
                     "pocketId"
                   ],
                   "name": "ledgerEntry_pocketId_idx_690c3b5b",
@@ -2218,7 +3455,16 @@
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "batchReference",
+                    "pocketId",
+                    "type",
+                    "direction"
+                  ]
+                }
+              ]
             },
             "passwordResetCode": {
               "columns": {
@@ -2280,22 +3526,19 @@
                   }
                 }
               ],
-              "indexes": [
-                {
-                  "columns": [
-                    "userId"
-                  ],
-                  "name": "passwordResetCode_userId_idx_a489d58a",
-                  "prefix": "passwordResetCode_userId_idx",
-                  "unique": false
-                }
-              ],
+              "indexes": [],
               "primaryKey": {
                 "columns": [
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "userId"
+                  ]
+                }
+              ]
             },
             "pocket": {
               "checks": [
@@ -2363,6 +3606,16 @@
                   "codecId": "pg/timestamptz-string@1",
                   "nativeType": "timestamptz",
                   "nullable": true
+                },
+                "name": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "nameKey": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
                 },
                 "qstashMessageId": {
                   "codecId": "pg/text@1",
@@ -2433,7 +3686,7 @@
                 {
                   "columns": [
                     "userId",
-                    "type"
+                    "nameKey"
                   ]
                 }
               ]
@@ -2457,7 +3710,12 @@
                   "nativeType": "int8",
                   "nullable": false
                 },
-                "commissionEarned": {
+                "anchorBillId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "commissionAmount": {
                   "codecId": "pg/int8@1",
                   "nativeType": "int8",
                   "nullable": true
@@ -2470,6 +3728,16 @@
                   },
                   "nativeType": "timestamptz",
                   "nullable": false
+                },
+                "detail": {
+                  "codecId": "pg/json@1",
+                  "nativeType": "json",
+                  "nullable": true
+                },
+                "failureReason": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
                 },
                 "id": {
                   "codecId": "pg/text@1",
@@ -2486,7 +3754,12 @@
                   "nativeType": "text",
                   "nullable": false
                 },
-                "providerReference": {
+                "productSlug": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "providerSlug": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
@@ -2495,6 +3768,11 @@
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": true
+                },
+                "reference": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
                 },
                 "smartCardNumber": {
                   "codecId": "pg/text@1",
@@ -2598,7 +3876,12 @@
               "uniques": [
                 {
                   "columns": [
-                    "providerReference"
+                    "reference"
+                  ]
+                },
+                {
+                  "columns": [
+                    "anchorBillId"
                   ]
                 }
               ]
@@ -2726,11 +4009,225 @@
                 }
               ]
             },
+            "transfer": {
+              "checks": [
+                {
+                  "expression": "\"channel\" IN ('NIP', 'BOOK')",
+                  "name": "transfer_channel_check_c087d55d",
+                  "prefix": "transfer_channel_check"
+                },
+                {
+                  "expression": "\"status\" IN ('PENDING', 'SUCCESS', 'FAILED', 'REVERSED')",
+                  "name": "transfer_status_check_13cd8b7c",
+                  "prefix": "transfer_status_check"
+                }
+              ],
+              "columns": {
+                "accountName": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "accountNumber": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "amount": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "anchorTransferId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "bankCode": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "beneficiaryId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "channel": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "TransferChannel",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "failureReason": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "fee": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "narration": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "pocketId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "reference": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "PENDING"
+                  },
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "TransferStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "transfer"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                },
+                {
+                  "source": {
+                    "columns": [
+                      "pocketId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "transfer"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "pocket"
+                  }
+                },
+                {
+                  "source": {
+                    "columns": [
+                      "beneficiaryId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "transfer"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "beneficiary"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "beneficiaryId"
+                  ],
+                  "name": "transfer_beneficiaryId_idx_2288bf83",
+                  "prefix": "transfer_beneficiaryId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "pocketId"
+                  ],
+                  "name": "transfer_pocketId_idx_690c3b5b",
+                  "prefix": "transfer_pocketId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "transfer_userId_idx_a489d58a",
+                  "prefix": "transfer_userId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "reference"
+                  ]
+                },
+                {
+                  "columns": [
+                    "anchorTransferId"
+                  ]
+                }
+              ]
+            },
             "user": {
               "checks": [
                 {
-                  "expression": "\"kycStatus\" IN ('PENDING', 'APPROVED', 'REJECTED')",
-                  "name": "user_kycStatus_check_039b5ced",
+                  "expression": "\"kycStatus\" IN ('NOT_SUBMITTED', 'PENDING', 'ACTION_REQUIRED', 'MANUAL_REVIEW', 'APPROVED', 'REJECTED')",
+                  "name": "user_kycStatus_check_b56936a5",
                   "prefix": "user_kycStatus_check"
                 },
                 {
@@ -2764,11 +4261,6 @@
                   "nativeType": "text",
                   "nullable": false
                 },
-                "homeAddress": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": true
-                },
                 "id": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -2787,7 +4279,7 @@
                   "codecId": "pg/text@1",
                   "default": {
                     "kind": "literal",
-                    "value": "PENDING"
+                    "value": "NOT_SUBMITTED"
                   },
                   "nativeType": "text",
                   "nullable": false,
@@ -2870,20 +4362,40 @@
             },
             "virtualAccount": {
               "columns": {
+                "accountName": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "accountNumber": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
-                  "nullable": false
+                  "nullable": true
                 },
                 "anchorAccountId": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
                 },
+                "anchorAccountNumberId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "bankName": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
-                  "nullable": false
+                  "nullable": true
+                },
+                "bankNipCode": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "closedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
                 },
                 "createdAt": {
                   "codecId": "pg/timestamptz-string@1",
@@ -2897,6 +4409,20 @@
                 "id": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
+                  "nullable": false
+                },
+                "isFrozen": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
                   "nullable": false
                 },
                 "userId": {
@@ -2938,6 +4464,11 @@
                 {
                   "columns": [
                     "anchorAccountId"
+                  ]
+                },
+                {
+                  "columns": [
+                    "anchorAccountNumberId"
                   ]
                 }
               ]
@@ -3005,6 +4536,21 @@
                 "CABLE_TV"
               ]
             },
+            "DepositStatus": {
+              "kind": "valueSet",
+              "values": [
+                "RECEIVED",
+                "COMPLETED"
+              ]
+            },
+            "Gender": {
+              "kind": "valueSet",
+              "values": [
+                "MALE",
+                "FEMALE",
+                "OTHERS"
+              ]
+            },
             "IdempotencyStatus": {
               "kind": "valueSet",
               "values": [
@@ -3012,10 +4558,23 @@
                 "COMPLETED"
               ]
             },
+            "KycIdType": {
+              "kind": "valueSet",
+              "values": [
+                "DRIVERS_LICENSE",
+                "VOTERS_CARD",
+                "PASSPORT",
+                "NATIONAL_ID",
+                "NIN_SLIP"
+              ]
+            },
             "KycStatus": {
               "kind": "valueSet",
               "values": [
+                "NOT_SUBMITTED",
                 "PENDING",
+                "ACTION_REQUIRED",
+                "MANUAL_REVIEW",
                 "APPROVED",
                 "REJECTED"
               ]
@@ -3032,6 +4591,9 @@
               "values": [
                 "DEPOSIT_SPLIT",
                 "PURCHASE",
+                "PURCHASE_REVERSAL",
+                "TRANSFER_OUT",
+                "TRANSFER_REVERSAL",
                 "UNLOCK_TRANSFER",
                 "MANUAL_ADJUSTMENT"
               ]
@@ -3067,6 +4629,22 @@
                 "ADMIN",
                 "SUPERADMIN"
               ]
+            },
+            "TransferChannel": {
+              "kind": "valueSet",
+              "values": [
+                "NIP",
+                "BOOK"
+              ]
+            },
+            "TransferStatus": {
+              "kind": "valueSet",
+              "values": [
+                "PENDING",
+                "SUCCESS",
+                "FAILED",
+                "REVERSED"
+              ]
             }
           }
         },
@@ -3074,10 +4652,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "1bb7cf00f1aea76f8e61d2f9518788537c227b3b5cd35a89ea7d64dbfc947ada"
+    "storageHash": "bbbd7fcfd2c383679e0cac489c2b1d2a9cbeb48eb13d93fbaf12dc65cb766db2"
   },
   "execution": {
-    "executionHash": "11a67859692e02cf193864d38a67e3e3e67bce5b97aad1f6e4988f9b63ec6624",
+    "executionHash": "e3f9ada753bc325f69a98393ec3f6b9f0abcf42457451e33f4bd31dcddaddd61",
     "mutations": {
       "defaults": [
         {
@@ -3088,7 +4666,59 @@
           "ref": {
             "column": "id",
             "namespace": "public",
+            "table": "address"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "address"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
             "table": "beneficiary"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "deposit"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "deposit"
           }
         },
         {
@@ -3109,6 +4739,21 @@
           },
           "ref": {
             "column": "id",
+            "namespace": "public",
+            "table": "kycVerification"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
             "namespace": "public",
             "table": "kycVerification"
           }
@@ -3206,6 +4851,32 @@
           "ref": {
             "column": "id",
             "namespace": "public",
+            "table": "transfer"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "transfer"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
             "table": "user"
           }
         },
@@ -3231,6 +4902,21 @@
           },
           "ref": {
             "column": "id",
+            "namespace": "public",
+            "table": "virtualAccount"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
             "namespace": "public",
             "table": "virtualAccount"
           }

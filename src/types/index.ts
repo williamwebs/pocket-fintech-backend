@@ -1,6 +1,12 @@
 export type UserRole = "USER" | "ADMIN" | "SUPERADMIN";
 
-export type KycStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type KycStatus =
+  | "NOT_SUBMITTED"
+  | "PENDING"
+  | "ACTION_REQUIRED"
+  | "MANUAL_REVIEW"
+  | "APPROVED"
+  | "REJECTED";
 
 export interface TokenPayload {
   userId: string;

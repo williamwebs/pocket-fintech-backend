@@ -1,4 +1,9 @@
 // use prisma-8
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
 enum Role {
   USER
   ADMIN
@@ -25,14 +30,43 @@ enum LedgerDirection {
 enum LedgerEntryType {
   DEPOSIT_SPLIT
   PURCHASE
+  PURCHASE_REVERSAL
+  TRANSFER_OUT
+  TRANSFER_REVERSAL
   UNLOCK_TRANSFER
   MANUAL_ADJUSTMENT
 }
 
+// Mirrors Anchor's KYC outcomes:
+//   customer.identification.approved            -> APPROVED
+//   customer.identification.rejected            -> REJECTED
+//   customer.identification.manualReview        -> MANUAL_REVIEW
+//   customer.identification.reenter_information -> ACTION_REQUIRED
+//   customer.identification.awaitingDocument    -> ACTION_REQUIRED
+//   customer.identification.error               -> stays PENDING (record it in lastEvent, retry)
 enum KycStatus {
+  NOT_SUBMITTED
   PENDING
+  ACTION_REQUIRED
+  MANUAL_REVIEW
   APPROVED
   REJECTED
+}
+
+// Anchor accepts Male / Female / Others
+enum Gender {
+  MALE
+  FEMALE
+  OTHERS
+}
+
+// Tier 3 document types accepted by Anchor
+enum KycIdType {
+  DRIVERS_LICENSE
+  VOTERS_CARD
+  PASSPORT
+  NATIONAL_ID
+  NIN_SLIP
 }
 
 enum BillType {
@@ -48,21 +82,44 @@ enum PurchaseStatus {
   FAILED
 }
 
+// nip.inbound.received -> RECEIVED, nip.inbound.completed -> COMPLETED
+enum DepositStatus {
+  RECEIVED
+  COMPLETED
+}
+
+enum TransferChannel {
+  NIP
+  BOOK
+}
+
+// nip.transfer.reversed can arrive AFTER a transfer succeeded, hence REVERSED
+enum TransferStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REVERSED
+}
+
 enum IdempotencyStatus {
   PROCESSING
   COMPLETED
 }
 
+// ---------------------------------------------------------------------------
+// Users, auth
+// ---------------------------------------------------------------------------
+
 model User {
   id                String                     @id @default(uuid())
-  name              String?
-  email             String                     @unique
+  name              String? // display name. Legal names live on KycVerification
+  email             String                     @unique // normalise to lower-case before saving
   role              Role                       @default(USER)
-  phone             String                     @unique
+  phone             String                     @unique // normalise to one canonical format before saving
   passwordHash      String
-  homeAddress       String? // optional for now, but required for KYC
-  kycStatus         KycStatus                  @default(PENDING)
-  kycTier           Int                        @default(0) // 0 = unverified, 1/2/3 per Anchor's tiers
+  address           Address?
+  kycStatus         KycStatus                  @default(NOT_SUBMITTED) // mirrors the latest KycVerification, update both in one transaction
+  kycTier           Int                        @default(0) // our own numbering; keep the mapping to Anchor's TIER_2 / TIER_3 in one constant
   anchorCustomerId  String?                    @unique
   isActive          Boolean                    @default(true)
   deletedAt         TimestamptzString?
@@ -75,6 +132,8 @@ model User {
   kycVerifications  KycVerification[]
   beneficiaries     Beneficiary[]
   purchases         Purchase[]
+  deposits          Deposit[]
+  transfers         Transfer[]
   idempotencyKeys   IdempotencyKey[]
   passwordResetCode PasswordResetCode[]
 }
@@ -83,7 +142,7 @@ model Session {
   id                String             @id @default(uuid())
   userId            String
   user              User               @relation(fields:[userId], references:[id])
-  tokenHash         String             @unique // SHA-256 of the refresh token — never store it raw
+  tokenHash         String             @unique // SHA-256 of the refresh token, never store it raw
   isRevoked         Boolean            @default(false)
   revokedAt         TimestamptzString?
   replacedByTokenId String?            @unique
@@ -98,121 +157,8 @@ model Session {
   @@index([userId])
 }
 
-model KycVerification {
-  id              String             @id @default(uuid())
-  userId          String
-  user            User               @relation(fields:[userId], references:[id])
-  tier            Int // tier being attempted: 1, 2, or 3
-  status          KycStatus          @default(PENDING)
-  documentType    String? // e.g. NIN, BVN, international passport
-  documentUrl     String?
-  rejectionReason String?
-  reviewedAt      TimestamptzString?
-  createdAt       TimestamptzString  @default(now())
-}
-
-model VirtualAccount {
-  id              String            @id @default(uuid())
-  userId          String            @unique
-  user            User              @relation(fields:[userId], references:[id])
-  anchorAccountId String            @unique
-  accountNumber   String
-  bankName        String
-  createdAt       TimestamptzString @default(now())
-}
-
-model Pocket {
-  id              String                     @id @default(uuid())
-  userId          String
-  user            User                       @relation(fields:[userId], references:[id])
-  type            PocketType
-  lockCategory    PocketLockCategory? // null for SPENDING, which is never locked
-  balance         BigInt                     @default(0) // kobo — only change alongside a LedgerEntry
-  splitPercent    Int? // null for SPENDING (takes the remainder)
-  isLocked        Boolean                    @default(false)
-  lockedAt        TimestamptzString?
-  maturityDate    TimestamptzString?
-  qstashMessageId String? // set when a TIGHT_LOCK schedules its unlock job
-  createdAt       TimestamptzString          @default(now())
-  updatedAt       temporal.updatedAtString()
-
-  ledgerEntries   LedgerEntry[]
-  purchases       Purchase[]
-
-  @@unique([userId, type])
-}
-
-model LedgerEntry {
-  id             String            @id @default(uuid())
-  pocketId       String
-  pocket         Pocket            @relation(fields:[pocketId], references:[id])
-  direction      LedgerDirection
-  type           LedgerEntryType
-  amount         BigInt // always positive, kobo — direction says credit or debit
-  batchReference String // groups the entries from one split or one purchase
-  webhookEventId String?
-  webhookEvent   WebhookEvent?     @relation(fields:[webhookEventId], references:[id])
-  createdAt      TimestamptzString @default(now())
-
-  @@index([pocketId])
-  @@index([batchReference])
-}
-
-model WebhookEvent {
-  id            String             @id @default(uuid())
-  externalId    String             @unique // Anchor's event/transaction ID — your idempotency guard
-  eventType     String // e.g. "payment.settled", "accountNumber.created"
-  payload       Json
-  processedAt   TimestamptzString?
-  createdAt     TimestamptzString  @default(now())
-
-  ledgerEntries LedgerEntry[]
-}
-
-model Purchase {
-  id                String                     @id @default(uuid())
-  userId            String
-  user              User                       @relation(fields:[userId], references:[id])
-  pocketId          String // always the SPENDING pocket, enforced in app logic
-  pocket            Pocket                     @relation(fields:[pocketId], references:[id])
-  type              BillType
-  amount            BigInt // kobo
-  commissionEarned  BigInt? // Anchor pays 2% airtime/data, 1% electricity, up to 1.5% cable
-  recipientPhone    String?
-  meterNumber       String?
-  smartCardNumber   String? // cable TV
-  providerReference String                     @unique // Anchor's transaction reference — idempotency + reconciliation
-  status            PurchaseStatus             @default(PENDING)
-  createdAt         TimestamptzString          @default(now())
-  updatedAt         temporal.updatedAtString()
-}
-
-model Beneficiary {
-  id             String            @id @default(uuid())
-  userId         String
-  user           User              @relation(fields:[userId], references:[id])
-  internalUserId String? // set if the beneficiary is also a platform user — enables book transfer
-  accountNumber  String
-  bankCode       String
-  accountName    String
-  nickname       String?
-  createdAt      TimestamptzString @default(now())
-
-  @@unique([userId, accountNumber, bankCode])
-}
-
-model IdempotencyKey {
-  id           String            @id @default(uuid())
-  key          String            @unique // client-supplied header, e.g. a UUID per user action
-  userId       String
-  user         User              @relation(fields:[userId], references:[id])
-  endpoint     String // which action this key guards, e.g. "POST /pockets/lock"
-  status       IdempotencyStatus @default(PROCESSING)
-  responseBody Json? // cached response, replayed if the same key comes in again
-  createdAt    TimestamptzString @default(now())
-  expiresAt    TimestamptzString // TTL — clean these up periodically
-}
-
+// At most one active reset code per user. The unique constraint stops two
+// concurrent OTP requests from leaving two valid codes (double the guess budget).
 model PasswordResetCode {
   id        String            @id @default(uuid())
   userId    String
@@ -222,5 +168,253 @@ model PasswordResetCode {
   expiresAt TimestamptzString
   createdAt TimestamptzString @default(now())
 
+  @@unique([userId])
+}
+
+model Address {
+  id            String                     @id @default(uuid())
+  userId        String
+  user          User                       @relation(fields:[userId], references:[id], onDelete: Cascade)
+  addressLine_1 String
+  addressLine_2 String?
+  city          String
+  state         String
+  postalCode    String
+  country       String // ISO country code as Anchor expects it, validate in Zod
+  createdAt     TimestamptzString          @default(now())
+  updatedAt     temporal.updatedAtString()
+
+  @@unique([userId])
+}
+
+// ---------------------------------------------------------------------------
+// KYC
+// ---------------------------------------------------------------------------
+
+// One row per submission attempt, a snapshot of what was sent to Anchor.
+// BVN and ID numbers are deliberately NOT stored. A resubmission pre-fills from
+// the newest row. For a tier 3 attempt, copy the names, date of birth and
+// gender from the previous attempt.
+model KycVerification {
+  id              String             @id @default(uuid())
+  userId          String
+  user            User               @relation(fields:[userId], references:[id])
+  tier            Int // tier being attempted (our numbering)
+  status          KycStatus          @default(PENDING)
+  firstName       String
+  lastName        String
+  middleName      String?
+  dateOfBirth     String // YYYY-MM-DD
+  gender          Gender
+  idType          KycIdType? // tier 3 only
+  idExpiryDate    String? // tier 3 only, YYYY-MM-DD
+  lastEvent       String? // last Anchor KYC event type received for this attempt
+  rejectionReason String?
+  reviewedAt      TimestamptzString?
+  createdAt       TimestamptzString  @default(now())
+  updatedAt       temporal.updatedAtString()
+
   @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Anchor account
+// ---------------------------------------------------------------------------
+
+// The funding account number can belong to a different bank than the deposit
+// account itself (Anchor's docs show a deposit account at one bank and its
+// account number at another). Everything below the anchorAccountId line is
+// filled in together once the account number exists (accountNumber.created
+// webhook, or fetch it from Anchor's account-numbers endpoint).
+model VirtualAccount {
+  id                    String             @id @default(uuid())
+  userId                String             @unique
+  user                  User               @relation(fields:[userId], references:[id])
+  anchorAccountId       String             @unique // deposit account id (…-anc_acc)
+  anchorAccountNumberId String?            @unique // account number id (…-anc_acc_num)
+  accountNumber         String?
+  bankName              String?
+  bankNipCode           String?
+  accountName           String?
+  isFrozen              Boolean            @default(false)
+  closedAt              TimestamptzString?
+  createdAt             TimestamptzString  @default(now())
+  updatedAt             temporal.updatedAtString()
+}
+
+// ---------------------------------------------------------------------------
+// Pockets and ledger
+// ---------------------------------------------------------------------------
+
+model Pocket {
+  id              String                     @id @default(uuid())
+  name            String // display name, required
+  nameKey         String // lower-cased, trimmed, whitespace-collapsed name, set by the app; makes "House" and "house" collide
+  userId          String
+  user            User                       @relation(fields:[userId], references:[id])
+  type            PocketType
+  lockCategory    PocketLockCategory? // null for SPENDING, which is never locked
+  balance         BigInt                     @default(0) // kobo, only change alongside a LedgerEntry via a conditional UPDATE (balance >= amount on debits)
+  splitPercent    Int? // null for SPENDING (takes the remainder), keep within 0-100
+  isLocked        Boolean                    @default(false)
+  lockedAt        TimestamptzString?
+  maturityDate    TimestamptzString?
+  qstashMessageId String? // set when a TIGHT_LOCK schedules its unlock job
+  createdAt       TimestamptzString          @default(now())
+  updatedAt       temporal.updatedAtString()
+
+  ledgerEntries   LedgerEntry[]
+  purchases       Purchase[]
+  transfers       Transfer[]
+
+  @@unique([userId, nameKey])
+}
+
+// Immutable audit trail, never update or delete rows.
+// batchReference groups the entries of one event. Suggested formats:
+//   deposit:<anchorTransferId>   purchase:<reference>   transfer:<reference>
+// The unique constraint is a last line of defence: a replayed deposit can never
+// credit the same pocket twice, even if every upstream guard fails.
+model LedgerEntry {
+  id             String            @id @default(uuid())
+  pocketId       String
+  pocket         Pocket            @relation(fields:[pocketId], references:[id])
+  direction      LedgerDirection
+  type           LedgerEntryType
+  amount         BigInt // always positive, kobo. direction says credit or debit
+  balanceAfter   BigInt // pocket balance right after this entry, kobo
+  batchReference String
+  webhookEventId String?
+  webhookEvent   WebhookEvent?     @relation(fields:[webhookEventId], references:[id])
+  createdAt      TimestamptzString @default(now())
+
+  @@unique([batchReference, pocketId, type, direction])
+  @@index([pocketId])
+}
+
+// ---------------------------------------------------------------------------
+// Money in, bills, money out
+// ---------------------------------------------------------------------------
+
+// Raw log of every Anchor webhook. externalId is Anchor's EVENT id (…-anc_et).
+// Event ids are NOT the idempotency key for money: nip.inbound.received and
+// nip.inbound.completed carry the same transfer id but different event ids.
+// Money is guarded by Deposit.anchorTransferId and the ledger unique constraint.
+model WebhookEvent {
+  id            String             @id @default(uuid())
+  externalId    String             @unique
+  eventType     String // e.g. "nip.inbound.completed", "accountNumber.created". Plain string, Anchor says its list is not exhaustive
+  payload       Json
+  processedAt   TimestamptzString?
+  createdAt     TimestamptzString  @default(now())
+
+  ledgerEntries LedgerEntry[]
+}
+
+// One row per inbound bank transfer. The webhook only carries ids, so fetch the
+// transfer from Anchor (amount, sender) before opening your database transaction.
+model Deposit {
+  id                  String             @id @default(uuid())
+  userId              String
+  user                User               @relation(fields:[userId], references:[id])
+  anchorTransferId    String             @unique // InboundNIPTransfer id (…-anc_inb_trsf)
+  anchorAccountId     String // deposit account that received it
+  amount              BigInt // kobo
+  senderName          String?
+  senderAccountNumber String?
+  senderBankName      String?
+  sessionId           String?
+  status              DepositStatus      @default(RECEIVED)
+  completedAt         TimestamptzString?
+  createdAt           TimestamptzString  @default(now())
+  updatedAt           temporal.updatedAtString()
+
+  @@index([userId])
+}
+
+model Purchase {
+  id               String                     @id @default(uuid())
+  userId           String
+  user             User                       @relation(fields:[userId], references:[id])
+  pocketId         String // always the SPENDING pocket, enforced in app logic
+  pocket           Pocket                     @relation(fields:[pocketId], references:[id])
+  type             BillType
+  amount           BigInt // kobo
+  reference        String                     @unique // generated by us BEFORE calling Anchor and sent as Anchor's `reference`
+  anchorBillId     String?                    @unique // Anchor's id (…-anc_bll), set once Anchor responds
+  providerSlug     String // e.g. "mtn"
+  productSlug      String? // data / electricity / cable product
+  commissionAmount BigInt? // kobo, from Anchor's response
+  recipientPhone   String? // one canonical format (Anchor's example uses 234…)
+  meterNumber      String?
+  smartCardNumber  String?
+  detail           Json? // Anchor's detail object (product, units, electricity token, …)
+  failureReason    String?
+  status           PurchaseStatus             @default(PENDING)
+  createdAt        TimestamptzString          @default(now())
+  updatedAt        temporal.updatedAtString()
+
+  @@index([userId])
+}
+
+// Outbound money (NIP and book transfers). Fields are provisional: confirm them
+// against Anchor's Bank (NIP) Transfer page before relying on them.
+model Transfer {
+  id               String             @id @default(uuid())
+  userId           String
+  user             User               @relation(fields:[userId], references:[id])
+  pocketId         String // always the SPENDING pocket, enforced in app logic
+  pocket           Pocket             @relation(fields:[pocketId], references:[id])
+  channel          TransferChannel
+  amount           BigInt // kobo
+  fee              BigInt?
+  reference        String             @unique // generated by us
+  anchorTransferId String?            @unique
+  beneficiaryId    String?
+  beneficiary      Beneficiary?       @relation(fields:[beneficiaryId], references:[id])
+  accountNumber    String // snapshot of the destination at send time
+  bankCode         String
+  accountName      String
+  narration        String?
+  failureReason    String?
+  status           TransferStatus     @default(PENDING)
+  createdAt        TimestamptzString  @default(now())
+  updatedAt        temporal.updatedAtString()
+
+  @@index([userId])
+}
+
+model Beneficiary {
+  id             String            @id @default(uuid())
+  userId         String
+  user           User              @relation(fields:[userId], references:[id])
+  internalUserId String? // set if the beneficiary is also a platform user, enables book transfer
+  accountNumber  String
+  bankCode       String
+  accountName    String // take this from the name enquiry, not from user input
+  nickname       String?
+  createdAt      TimestamptzString @default(now())
+
+  transfers      Transfer[]
+
+  @@unique([userId, accountNumber, bankCode])
+}
+
+// ---------------------------------------------------------------------------
+// API safety
+// ---------------------------------------------------------------------------
+
+model IdempotencyKey {
+  id           String            @id @default(uuid())
+  key          String // client-supplied header, e.g. a UUID per user action
+  requestHash  String // hash of method + path + body; same key with a different body is rejected
+  userId       String
+  user         User              @relation(fields:[userId], references:[id])
+  endpoint     String // which action this key guards, e.g. "POST /pockets"
+  status       IdempotencyStatus @default(PROCESSING)
+  responseBody Json? // cached response, replayed if the same key comes in again
+  createdAt    TimestamptzString @default(now())
+  expiresAt    TimestamptzString // TTL, clean these up periodically
+
+  @@unique([userId, key])
 }

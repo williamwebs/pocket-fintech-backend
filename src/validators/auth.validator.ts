@@ -1,15 +1,30 @@
 import { z } from "zod";
+import { normalizePhoneNumber } from "../utils/phone";
 
 export const signupSchema = z.object({
   body: z.object({
     email: z.email("Invalid email address"),
     fullName: z.string().min(5, "Full name must be at least 5 characters long"),
     role: z.enum(["USER", "ADMIN", "SUPERADMIN"], "Invalid role"),
-    phone: z.string().min(11, "Invalid phone number"),
+    phone: z
+      .string()
+      .min(10, "Phone number is too short")
+      .transform((val, ctx) => {
+        try {
+          return normalizePhoneNumber(val);
+        } catch {
+          ctx.addIssue({
+            code: "custom",
+            message:
+              "Invalid phone number format. Please provide a valid Nigerian phone number.",
+          });
+          return z.NEVER;
+        }
+      }),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must cntain at east one uppercase letter")
+      .regex(/[A-Z]/, "Password must contain at east one uppercase letter")
       .regex(/[a-z]/, "Password must contain at least one lowercase letter")
       .regex(/[0-9]/, "Password must contain at least one number")
       .regex(
@@ -25,7 +40,7 @@ export const signinSchema = z.object({
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must cntain at east one uppercase letter")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
       .regex(/[a-z]/, "Password must contain at least one lowercase letter")
       .regex(/[0-9]/, "Password must contain at least one number")
       .regex(

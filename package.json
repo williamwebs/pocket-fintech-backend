@@ -11,7 +11,7 @@
     "prisma:studio": "prisma studio",
     "postinstall": "prisma skills sync || exit 0",
     "contract:emit": "prisma contract emit",
-    "db:migrate": "prisma db migrate --advance-ref"
+    "db:migrate": "prisma db migrate --advance-ref db"
   },
   "license": "ISC",
   "type": "module",
