@@ -1,4 +1,3 @@
-import { text } from "stream/consumers";
 import { db } from "../prisma/db";
 import { UserProfile } from "../types";
 import { ApiError } from "../utils/apiError";
@@ -24,7 +23,7 @@ export const getMe = async (userId: string): Promise<UserProfile | null> => {
   return user;
 };
 
-export const geteUserById = async (
+export const getUserById = async (
   userId: string,
 ): Promise<UserProfile | null> => {
   const user = await db.orm.public.User.select(

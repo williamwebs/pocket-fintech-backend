@@ -7,7 +7,6 @@ import {
   setSessionCookie,
 } from "../utils/cookie";
 import { ApiError } from "../utils/apiError";
-import { success } from "zod";
 
 export const signup = asyncHandler(async (req: Request, res: Response) => {
   const { user, accessToken, session } = await authService.signup(req.body, {
@@ -32,7 +31,7 @@ export const signin = asyncHandler(async (req: Request, res: Response) => {
   setSessionCookie(res, session.rawToken, new Date(session.expiresAt));
 
   return res.status(200).json({
-    succes: true,
+    success: true,
     data: { message: "User signed in successfully", user, accessToken },
   });
 });

@@ -25,7 +25,7 @@ export const getUserById = asyncHandler(
     const { userId } = req.params;
     if (!userId) throw new ApiError(400, "User ID is required");
 
-    const userProfile = await userService.geteUserById(userId);
+    const userProfile = await userService.getUserById(userId);
 
     return res.status(200).json({
       success: true,
