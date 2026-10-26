@@ -53,13 +53,15 @@ const findUserFromPayload = async (payload: any) => {
 };
 
 export const handleAnchorWebhook = async (rawPayload: any) => {
+  // Anchor's JSON:API payload nests id and type inside `data`
   const externalId =
+    rawPayload?.data?.id ||
     rawPayload?.id ||
     rawPayload?.eventId ||
-    rawPayload?.data?.id ||
     `event-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
   const eventType =
+    rawPayload?.data?.type ||
     rawPayload?.type ||
     rawPayload?.eventType ||
     rawPayload?.event ||

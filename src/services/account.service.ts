@@ -93,8 +93,14 @@ export const syncVirtualAccountNumber = async (userId: string) => {
 
   if (!virtualAccount) return null;
 
-  // If already populated, return it
-  if (virtualAccount.accountNumber) return virtualAccount;
+  // If already completely populated with bankName and accountName, return it
+  if (
+    virtualAccount.accountNumber &&
+    virtualAccount.bankName &&
+    virtualAccount.accountName
+  ) {
+    return virtualAccount;
+  }
 
   const accountNumbers = await anchor.getAccountNumbers(
     virtualAccount.anchorAccountId,
@@ -105,18 +111,32 @@ export const syncVirtualAccountNumber = async (userId: string) => {
   }
 
   const primaryNumber = accountNumbers[0];
+  const attrs = primaryNumber.attributes;
+
+  const resolvedAccountNumber = attrs.accountNumber || virtualAccount.accountNumber;
+  const resolvedBankName =
+    attrs.bank?.name || attrs.bankName || virtualAccount.bankName || null;
+  const resolvedBankNipCode =
+    attrs.bank?.nipCode || attrs.bank?.code || attrs.bankNipCode || virtualAccount.bankNipCode || null;
+  const resolvedAccountName =
+    attrs.name || attrs.accountName || virtualAccount.accountName || null;
 
   await db.orm.public.VirtualAccount.where({ id: virtualAccount.id }).update({
-    accountNumber: primaryNumber.attributes.accountNumber,
-    bankName: primaryNumber.attributes.bankName || null,
-    bankNipCode: primaryNumber.attributes.bankNipCode || null,
-    accountName: primaryNumber.attributes.accountName || null,
+    accountNumber: resolvedAccountNumber,
+    bankName: resolvedBankName,
+    bankNipCode: resolvedBankNipCode,
+    accountName: resolvedAccountName,
     anchorAccountNumberId: primaryNumber.id,
   });
 
   logger.info(
-    { userId, accountNumber: primaryNumber.attributes.accountNumber },
-    "[ACCOUNT] Successfully synced account number from Anchor",
+    {
+      userId,
+      accountNumber: resolvedAccountNumber,
+      bankName: resolvedBankName,
+      accountName: resolvedAccountName,
+    },
+    "[ACCOUNT] Successfully synced account number and bank details from Anchor",
   );
 
   return await db.orm.public.VirtualAccount.where({

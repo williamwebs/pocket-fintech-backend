@@ -13,7 +13,9 @@ const buildUserProfile = async (user: any): Promise<UserProfile> => {
   if (
     user.kycStatus === "APPROVED" &&
     virtualAccount &&
-    !virtualAccount.accountNumber
+    (!virtualAccount.accountNumber ||
+      !virtualAccount.bankName ||
+      !virtualAccount.accountName)
   ) {
     try {
       virtualAccount = await syncVirtualAccountNumber(user.id);
@@ -34,7 +36,7 @@ const buildUserProfile = async (user: any): Promise<UserProfile> => {
     role: user.role,
     kycStatus: user.kycStatus,
     kycTier: user.kycTier,
-    anchorCustomerId: user.anchorCustomerId,
+    // anchorCustomerId: user.anchorCustomerId,
     createdAt: user.createdAt,
     virtualAccount: virtualAccount
       ? {

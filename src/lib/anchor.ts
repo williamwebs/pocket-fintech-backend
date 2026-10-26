@@ -51,7 +51,15 @@ export interface AnchorAccountNumberResource {
   type: string;
   attributes: {
     accountNumber: string;
+    name?: string;
     accountName?: string;
+    bank?: {
+      provider?: string;
+      name?: string;
+      code?: string;
+      nipCode?: string;
+      cbnCode?: string;
+    };
     bankName?: string;
     bankNipCode?: string;
     status?: string;
@@ -276,6 +284,83 @@ class AnchorClient {
 
     return res.data;
   }
+
+  /**
+   * Get the verification status for a customer directly from the customer resource.
+   */
+  async getCustomerVerification(customerId: string): Promise<{
+    status: string;
+    level: string;
+    [key: string]: any;
+  } | null> {
+    try {
+      const customer = await this.getCustomer(customerId);
+      const verification = customer?.attributes?.verification;
+
+      if (!verification) {
+        return null;
+      }
+
+      return {
+        status: verification.status || "unknown",
+        level: verification.level || "unknown",
+        ...verification,
+      };
+    } catch (err: any) {
+      if (err.statusCode === 404 || err.message?.includes("404")) {
+        return null;
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Register a webhook with Anchor.
+   * deliveryMode: "AtMostOnce" | "AtLeastOnce"
+   */
+  async registerWebhook(input: {
+    url: string;
+    label?: string;
+    deliveryMode?: "AtMostOnce" | "AtLeastOnce";
+    token?: string;
+  }) {
+    const payload = {
+      data: {
+        type: "Webhook",
+        attributes: {
+          url: input.url,
+          label: input.label || "app_webhook",
+          deliveryMode: input.deliveryMode || "AtLeastOnce",
+          ...(input.token ? { token: input.token } : {}),
+        },
+      },
+    };
+
+    const res = await this.request<{ data: any }>(
+      "/api/v1/webhooks",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+    );
+
+    return res.data;
+  }
+
+  /**
+   * List registered webhooks on this Anchor organization.
+   */
+  async listWebhooks() {
+    const res = await this.request<{ data: any[] }>(
+      "/api/v1/webhooks",
+      {
+        method: "GET",
+      },
+    );
+
+    return res.data;
+  }
 }
 
 export const anchor = new AnchorClient();
+

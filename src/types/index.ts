@@ -38,7 +38,7 @@ export interface UserProfile {
   role: UserRole;
   kycStatus: KycStatus;
   kycTier: number;
-  anchorCustomerId: string | null;
+  // anchorCustomerId: string | null;
   createdAt: string;
   virtualAccount?: VirtualAccountSummary | null;
   address?: AddressSummary | null;
