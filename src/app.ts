@@ -8,6 +8,9 @@ import logger, { logStream } from "./utils/logger.js";
 import authRouter from "./routes/auth.routes.js";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
 import userRouter from "./routes/user.routes.js";
+import kycRouter from "./routes/kyc.routes.js";
+import webhookRouter from "./routes/webhook.routes.js";
+import jobRouter from "./routes/job.routes.js";
 
 const app = express();
 
@@ -23,12 +26,21 @@ app.use(
 );
 app.use(morgan(morganFormat, { stream: logStream }));
 
-app.use(express.json());
+app.use(
+  express.json({
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf;
+    },
+  }),
+);
 app.use(cookieParser());
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/kyc", kycRouter);
+app.use("/api/v1/webhooks", webhookRouter);
+app.use("/api/v1/jobs", jobRouter);
 
 app.use((_req, res) => res.status(404).json({ error: "Not found" }));
 
