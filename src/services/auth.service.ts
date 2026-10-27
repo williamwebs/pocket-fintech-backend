@@ -28,7 +28,7 @@ export const signup = async (
   input: SignupInput,
   metadata?: { userAgent?: string; ipAddress?: string },
 ) => {
-  const { email, password, fullName, role, phone } = input;
+  const { email, password, fullName, phone } = input;
   // hash password
   const hashedPassword = await hashPassword(password);
   try {
@@ -42,7 +42,7 @@ export const signup = async (
       email,
       passwordHash: hashedPassword,
       name: fullName,
-      role,
+      role: "USER",
       phone,
     });
     // create session using user.id and metadata

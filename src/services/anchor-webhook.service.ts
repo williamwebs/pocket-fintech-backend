@@ -1,6 +1,12 @@
 import { db } from "../prisma/db.js";
+import { anchor } from "../lib/anchor.js";
 import { enqueueAccountCreationJob } from "../lib/qstash.js";
 import { createDepositAccountForUser, syncVirtualAccountNumber } from "./account.service.js";
+import {
+  processDepositCompleted,
+  processDepositReceived,
+  processPaymentReceived,
+} from "./deposit.service.js";
 import { ANCHOR_WEBHOOK_URL, PORT } from "../config/env.js";
 import logger from "../utils/logger.js";
 
@@ -47,6 +53,40 @@ const findUserFromPayload = async (payload: any) => {
   if (customerId) {
     const user = await db.orm.public.User.where({ anchorCustomerId: customerId }).first();
     if (user) return user;
+
+    // Fallback: If webhook arrives before the KYC endpoint transaction finished writing anchorCustomerId,
+    // fetch customer from Anchor and query by metadata.userId or email
+    try {
+      const customer = await anchor.getCustomer(customerId);
+      const metaUserId = customer?.attributes?.metadata?.userId;
+      const email = customer?.attributes?.email;
+
+      if (metaUserId) {
+        const u = await db.orm.public.User.where({ id: metaUserId }).first();
+        if (u) {
+          // Sync anchorCustomerId if it wasn't saved yet
+          if (!u.anchorCustomerId) {
+            await db.orm.public.User.where({ id: u.id }).update({ anchorCustomerId: customerId });
+          }
+          return u;
+        }
+      }
+
+      if (email) {
+        const u = await db.orm.public.User.where({ email }).first();
+        if (u) {
+          if (!u.anchorCustomerId) {
+            await db.orm.public.User.where({ id: u.id }).update({ anchorCustomerId: customerId });
+          }
+          return u;
+        }
+      }
+    } catch (err: any) {
+      logger.warn(
+        { customerId, error: err.message },
+        "[ANCHOR_WEBHOOK] Could not fetch customer details fallback from Anchor",
+      );
+    }
   }
 
   return null;
@@ -81,7 +121,7 @@ export const handleAnchorWebhook = async (rawPayload: any) => {
 
   // 2. Persist WebhookEvent
   const sanitized = sanitizePayload(rawPayload);
-  await db.orm.public.WebhookEvent.create({
+  const createdWebhookEvent = await db.orm.public.WebhookEvent.create({
     externalId,
     eventType,
     payload: sanitized,
@@ -232,6 +272,55 @@ export const handleAnchorWebhook = async (rawPayload: any) => {
             await syncVirtualAccountNumber(virtualAccount.userId);
           }
         }
+        break;
+      }
+
+      case "nip.inbound.completed": {
+        const transferId =
+          rawPayload?.data?.relationships?.transfer?.data?.id ||
+          rawPayload?.data?.attributes?.transferId ||
+          rawPayload?.data?.id;
+
+        const depositAccountId =
+          rawPayload?.data?.relationships?.account?.data?.id ||
+          rawPayload?.data?.attributes?.accountId;
+
+        if (transferId) {
+          await processDepositCompleted({
+            transferId,
+            webhookEventId: createdWebhookEvent.id,
+            depositAccountId,
+          });
+        } else {
+          logger.warn({ rawPayload }, "[ANCHOR_WEBHOOK] No transfer ID found in nip.inbound.completed event");
+        }
+        break;
+      }
+
+      case "nip.inbound.received": {
+        const transferId =
+          rawPayload?.data?.relationships?.transfer?.data?.id ||
+          rawPayload?.data?.attributes?.transferId ||
+          rawPayload?.data?.id;
+
+        const depositAccountId =
+          rawPayload?.data?.relationships?.account?.data?.id ||
+          rawPayload?.data?.attributes?.accountId;
+
+        if (transferId) {
+          await processDepositReceived({
+            transferId,
+            depositAccountId,
+          });
+        }
+        break;
+      }
+
+      case "payment.received": {
+        await processPaymentReceived({
+          payload: rawPayload,
+          webhookEventId: createdWebhookEvent.id,
+        });
         break;
       }
 

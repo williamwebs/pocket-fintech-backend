@@ -5,7 +5,6 @@ export const signupSchema = z.object({
   body: z.object({
     email: z.email("Invalid email address"),
     fullName: z.string().min(5, "Full name must be at least 5 characters long"),
-    role: z.enum(["USER", "ADMIN", "SUPERADMIN"], "Invalid role"),
     phone: z
       .string()
       .min(10, "Phone number is too short")

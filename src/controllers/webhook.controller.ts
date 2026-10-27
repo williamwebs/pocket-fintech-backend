@@ -6,11 +6,17 @@ import { ApiError } from "../utils/apiError.js";
 
 export const handleAnchorWebhook = asyncHandler(
   async (req: Request, res: Response) => {
+    const { NODE_ENV } = await import("../config/env.js");
     const signature = req.headers["x-anchor-signature"] as string | undefined;
 
+    // In production, signature is strictly required
     const isValid = verifyAnchorSignature(req.rawBody, signature);
     if (!isValid) {
-      throw new ApiError(401, "Invalid webhook signature");
+      if (NODE_ENV === "development" && !signature) {
+        // Allow local dev/postman simulation when signature header is omitted
+      } else {
+        throw new ApiError(401, "Invalid webhook signature");
+      }
     }
 
     const result = await anchorWebhookService.handleAnchorWebhook(req.body);

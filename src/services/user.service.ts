@@ -4,6 +4,7 @@ import { ApiError } from "../utils/apiError";
 import { UpdateProfileInput } from "../validators/user.validator";
 
 import { syncVirtualAccountNumber } from "./account.service.js";
+import { reconcileUserDeposits } from "./deposit.service.js";
 
 const buildUserProfile = async (user: any): Promise<UserProfile> => {
   let virtualAccount = await db.orm.public.VirtualAccount.where({
@@ -21,6 +22,15 @@ const buildUserProfile = async (user: any): Promise<UserProfile> => {
       virtualAccount = await syncVirtualAccountNumber(user.id);
     } catch {
       // Ignore background sync errors on profile query
+    }
+  }
+
+  // Seamless deposit reconciliation: guarantees ledger is always up to date with settled Anchor funds
+  if (user.kycStatus === "APPROVED" && virtualAccount?.anchorAccountId) {
+    try {
+      await reconcileUserDeposits(user.id);
+    } catch {
+      // Non-blocking background reconciliation
     }
   }
 

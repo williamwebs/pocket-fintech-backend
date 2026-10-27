@@ -11,6 +11,7 @@ import userRouter from "./routes/user.routes.js";
 import kycRouter from "./routes/kyc.routes.js";
 import webhookRouter from "./routes/webhook.routes.js";
 import jobRouter from "./routes/job.routes.js";
+import pocketRouter from "./routes/pocket.routes.js";
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use("/api/v1/user", userRouter);
 app.use("/api/v1/kyc", kycRouter);
 app.use("/api/v1/webhooks", webhookRouter);
 app.use("/api/v1/jobs", jobRouter);
+app.use("/api/v1/pockets", pocketRouter);
 
 app.use((_req, res) => res.status(404).json({ error: "Not found" }));
 

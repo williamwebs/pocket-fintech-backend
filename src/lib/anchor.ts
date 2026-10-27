@@ -67,6 +67,37 @@ export interface AnchorAccountNumberResource {
   };
 }
 
+export interface AnchorInboundTransferResource {
+  id: string;
+  type: string;
+  attributes: {
+    reference?: string;
+    amount: number; // kobo
+    currency?: string;
+    description?: string;
+    sessionId?: string;
+    sourceAccountNumber?: string;
+    sourceAccountName?: string;
+    sourceBank?: {
+      name?: string;
+      code?: string;
+    };
+    status: string;
+    createdAt?: string;
+    updatedAt?: string;
+    [key: string]: any;
+  };
+  relationships?: {
+    account?: {
+      data?: {
+        id: string;
+        type: string;
+      };
+    };
+    [key: string]: any;
+  };
+}
+
 class AnchorClient {
   private apiKey: string;
   private baseUrl: string;
@@ -353,6 +384,48 @@ class AnchorClient {
   async listWebhooks() {
     const res = await this.request<{ data: any[] }>(
       "/api/v1/webhooks",
+      {
+        method: "GET",
+      },
+    );
+
+    return res.data;
+  }
+
+  /**
+   * Fetch an Inbound NIP Transfer details from Anchor.
+   */
+  async getInboundTransfer(inboundTransferId: string) {
+    const res = await this.request<{ data: AnchorInboundTransferResource }>(
+      `/api/v1/inbound-transfers/${inboundTransferId}?include=DepositAccount`,
+      {
+        method: "GET",
+      },
+    );
+
+    return res.data;
+  }
+
+  /**
+   * Fetch all settled transactions for a Deposit Account.
+   */
+  async getAccountTransactions(accountId: string) {
+    const res = await this.request<{ data: any[] }>(
+      `/api/v1/transactions?accountId=${encodeURIComponent(accountId)}`,
+      {
+        method: "GET",
+      },
+    );
+
+    return res.data;
+  }
+
+  /**
+   * Fetch a Deposit Account details directly from Anchor.
+   */
+  async getDepositAccount(accountId: string) {
+    const res = await this.request<{ data: any }>(
+      `/api/v1/accounts/${encodeURIComponent(accountId)}`,
       {
         method: "GET",
       },
